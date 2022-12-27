@@ -1,0 +1,190 @@
+type Account @entity {
+  id: ID!
+  address: Bytes!
+  offers: [Offer!]!
+  offersCount: BigInt!
+  purchases: [Transaction!]!
+  purchasesCount: BigInt!
+  sales: [Transaction!]!
+  salesCount: BigInt!
+  swaps: [Transaction!]!
+  swapsCount: BigInt!
+  transactions: [Transaction!]!
+  transactionsCount: BigInt!
+  historyMonths: [AccountMonth!]!
+  historyMonthsCount: BigInt!
+}
+
+type AccountMonth @entity {
+  # <accountAddress>-<year>-<month>
+  id: ID!
+  account: Account!
+  year: String!
+  month: String!
+  createdOffers: [Offer!]!
+  createdOffersCount: BigInt!
+  updatedOffers: [Offer!]!
+  updatedOffersCount: BigInt!
+  deletedOffers: [Offer!]!
+  deletedOffersCount: BigInt!
+  purchases: [Transaction!]!
+  purchasesCount: BigInt!
+  sales: [Transaction!]!
+  salesCount: BigInt!
+  swaps: [Transaction!]!
+  swapsCount: BigInt!
+  transactions: [Transaction!]!
+  transactionsCount: BigInt!
+}
+
+enum TokenType {
+  NOTWHITELISTEDTOKEN
+  REALTOKEN
+  ERC20WITHPERMIT
+  ERC20WITHOUTPERMIT
+}
+
+type Token @entity {
+  id: ID!
+  address: Bytes!
+  type: TokenType!
+  decimals: BigInt!
+  name: String!
+  symbol: String!
+  offers: [Offer!]!
+  offersCount: BigInt!
+  transactions: [Transaction!]!
+  transactionsCount: BigInt!
+  volume: BigInt!
+  historyDays: [TokenDay!]!
+  historyDaysCount: BigInt!
+  historyMonths: [TokenMonth!]!
+  historyMonthsCount: BigInt!
+}
+
+type TokenDay @entity {
+  # <tokenAddress>-<year>-<month>-<day>
+  id: ID!
+  token: Token!
+  year: String!
+  month: String!
+  day: String!
+  createdOffers: [Offer!]!
+  createdOffersCount: BigInt!
+  updatedOffers: [Offer!]!
+  updatedOffersCount: BigInt!
+  deletedOffers: [Offer!]!
+  deletedOffersCount: BigInt!
+  transactions: [Transaction!]!
+  transactionsCount: BigInt!
+  volume: BigInt!
+}
+
+type TokenMonth @entity {
+  # <tokenAddress>-<year>-<month>
+  id: ID!
+  token: Token!
+  year: String!
+  month: String!
+  createdOffers: [Offer!]!
+  createdOffersCount: BigInt!
+  updatedOffers: [Offer!]!
+  updatedOffersCount: BigInt!
+  deletedOffers: [Offer!]!
+  deletedOffersCount: BigInt!
+  transactions: [Transaction!]!
+  transactionsCount: BigInt!
+  volume: BigInt!
+}
+
+type OfferPrice @entity {
+  id: ID!
+  offer: Offer!
+  price: BigInt!
+  createdAtBlock: BigInt!
+  createdAtTimestamp: BigInt!
+}
+
+enum OfferQuantityOrigin {
+  OfferCreated
+  OfferUpdated
+  OfferDeleted
+  OfferAccepted
+}
+
+type OfferQuantity @entity {
+  id: ID!
+  offer: Offer!
+  quantity: BigInt!
+  origin: OfferQuantityOrigin!
+  createdAtBlock: BigInt!
+  createdAtTimestamp: BigInt!
+}
+
+enum TransactionType {
+  REALTOKENTOREALTOKEN
+  REALTOKENTOERC20
+  ERC20TOREALTOKEN
+  ERC20TOERC20
+}
+
+type Transaction @entity {
+  id: ID!
+  type: TransactionType!
+  offer: Offer!
+  taker: Account!
+  price: BigInt!
+  quantity: BigInt!
+  createdAtBlock: BigInt!
+  createdAtTimestamp: BigInt!
+}
+
+enum OfferType {
+  REALTOKENTOREALTOKEN
+  REALTOKENTOERC20
+  ERC20TOREALTOKEN
+  ERC20TOERC20
+}
+
+type Offer @entity {
+  id: ID!
+  type: OfferType!
+  maker: Account!
+  taker: Account
+  isPrivate: Boolean!
+  isActive: Boolean!
+  offerToken: Token!
+  buyerToken: Token!
+  price: BigInt!
+  prices: [OfferPrice!]!
+  pricesCount: BigInt!
+  quantity: BigInt!
+  quantities: [OfferQuantity!]!
+  quantitiesCount: BigInt!
+  transactions: [Transaction!]!
+  transactionsCount: BigInt!
+  createdAtBlock: BigInt!
+  createdAtTimestamp: BigInt!
+  removedAtBlock: BigInt
+  removedAtTimestamp: BigInt
+}
+
+type Statistic @entity {
+  id: ID!
+
+  offersCount: BigInt!
+  offersWithPriceChangesCount: BigInt!
+  offersDeletedCount: BigInt!
+  offersAcceptedCount: BigInt!
+  privateOffersCount: BigInt!
+  activeOffersCount: BigInt!
+
+  accountsCount: BigInt!
+  accountsWithOffersCount: BigInt!
+  accountsWithSalesCount: BigInt!
+  accountsWithPurchasesCount: BigInt!
+  accountsWithSwapsCount: BigInt!
+
+  transactionsCount: BigInt!
+  tokensCount: BigInt!
+}
