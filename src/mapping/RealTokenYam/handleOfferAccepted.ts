@@ -1,6 +1,6 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OfferAccepted as OfferAcceptedEvent } from '../../types/RealTokenYam/RealTokenYam'
-import { Offer, Transaction } from '../../types/schema'
+import { Offer, Token, Transaction } from '../../types/schema'
 import { createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
 import { isActiveOffer } from '../utils'
 import { Statistics } from '../utils/statistics/Statistics'
@@ -142,7 +142,7 @@ function saveOnOfferTaker (address: Address, transaction: Transaction, event: et
   }
 }
 
-function saveOnToken (address: Address, transactionId: string, quantity: BigInt, event: ethereum.Event): void {
+function saveOnToken (address: Address, transactionId: string, quantity: BigInt, event: ethereum.Event): Token {
   const token = getToken(address)
   const tokenDay = getTokenDay(token, event.block.timestamp)
   const tokenMonth = getTokenMonth(token, event.block.timestamp)
@@ -167,6 +167,8 @@ function saveOnToken (address: Address, transactionId: string, quantity: BigInt,
   tokenMonth.transactionsCount = BigInt.fromI32(tokenMonthTransactions.length)
   tokenMonth.volume = tokenMonth.volume.plus(quantity)
   tokenMonth.save()
+
+  return token
 }
 
 function getBuyerTokenQuantity (offerTokenAddress: Address, quantity: BigInt, price: BigInt): BigInt {
@@ -202,8 +204,8 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
 
     saveOnOfferMaker(event.params.seller, transaction, event)
     saveOnOfferTaker(event.params.buyer, transaction, event)
-    saveOnToken(event.params.offerToken, transaction.id, event.params.amount, event)
-    saveOnToken(event.params.buyerToken, transaction.id, buyerTokenQuantity, event)
+    const offerToken = saveOnToken(event.params.offerToken, transaction.id, event.params.amount, event)
+    const buyerToken = saveOnToken(event.params.buyerToken, transaction.id, buyerTokenQuantity, event)
 
     if (offer.transactionsCount.equals(BigInt.fromI32(1))) {
       Statistics.increaseOffersAcceptedCount()
@@ -211,6 +213,14 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
 
     if (!offer.isActive) {
       Statistics.decreaseActiveOffersCount()
+    }
+
+    if (offer.type != 'REALTOKENTOREALTOKEN' && offerToken.type == 'REALTOKEN') {
+      Statistics.increaseRealTokenTradeVolume(event.params.amount)
+    }
+
+    if (offer.type != 'REALTOKENTOREALTOKEN' && buyerToken.type == 'REALTOKEN') {
+      Statistics.increaseRealTokenTradeVolume(buyerTokenQuantity)
     }
   }
 }

@@ -187,4 +187,6 @@ type Statistic @entity {
 
   transactionsCount: BigInt!
   tokensCount: BigInt!
+
+  realTokenTradeVolume: BigInt!
 }

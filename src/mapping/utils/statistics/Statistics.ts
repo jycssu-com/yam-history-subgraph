@@ -23,6 +23,7 @@ export class Statistics {
       statistics.accountsWithSalesCount = BigInt.fromI32(0)
       statistics.accountsWithPurchasesCount = BigInt.fromI32(0)
       statistics.accountsWithSwapsCount = BigInt.fromI32(0)
+      statistics.realTokenTradeVolume = BigInt.fromI32(0)
       statistics.save()
     }
     Statistics.statistics = statistics
@@ -116,6 +117,12 @@ export class Statistics {
   static increaseAccountsWithSwapsCount (): void {
     let statistics = Statistics.getInstance()
     statistics.accountsWithSwapsCount = statistics.accountsWithSwapsCount.plus(BigInt.fromI32(1))
+    Statistics.save()
+  }
+
+  static increaseRealTokenTradeVolume (amount: BigInt): void {
+    let statistics = Statistics.getInstance()
+    statistics.realTokenTradeVolume = statistics.realTokenTradeVolume.plus(amount)
     Statistics.save()
   }
 
