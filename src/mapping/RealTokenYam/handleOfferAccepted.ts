@@ -179,6 +179,8 @@ function getBuyerTokenQuantity (offerTokenAddress: Address, quantity: BigInt, pr
 }
 
 export function handleOfferAccepted(event: OfferAcceptedEvent): void {
+  Statistics.initialize(event.block.timestamp)
+
   const offerId = event.params.offerId.toString()
   const offer = Offer.load(offerId)
 

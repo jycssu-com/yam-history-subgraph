@@ -35,6 +35,8 @@ function saveOnAccount (address: Address, offerId: string, block: ethereum.Block
 }
 
 export function handleOfferUpdated(event: OfferUpdatedEvent): void {
+  Statistics.initialize(event.block.timestamp)
+
   const offer = Offer.load(event.params.offerId.toString())
   if (offer) {
     const wasActive = offer.isActive

@@ -54,6 +54,8 @@ function saveOnAccount (address: Address, offerId: string, block: ethereum.Block
 }
 
 export function handleOfferCreated(event: OfferCreatedEvent): void {
+  Statistics.initialize(event.block.timestamp)
+
   const offerId = event.params.offerId.toString()
   const offerPrice = createOfferPrice(offerId, event.params.price, event)
   const offerQuantity = createOfferQuantity(offerId, event.params.amount, 'OfferCreated', event)

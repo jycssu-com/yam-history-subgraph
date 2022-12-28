@@ -34,6 +34,8 @@ function saveOnAccount (address: Address, offerId: string, block: ethereum.Block
 }
 
 export function handleOfferDeleted(event: OfferDeletedEvent): void {
+  Statistics.initialize(event.block.timestamp)
+
   const offerId = event.params.offerId.toString()
   const offer = Offer.load(offerId)
   if (offer) {

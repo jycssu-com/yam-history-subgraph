@@ -169,15 +169,91 @@ type Offer @entity {
   removedAtTimestamp: BigInt
 }
 
-type Statistic @entity {
+type StatisticDay @entity {
   id: ID!
+  year: String!
+  month: String!
+  day: String!
 
-  offersCount: BigInt!
-  offersWithPriceChangesCount: BigInt!
+  offersCreatedCount: BigInt!
   offersDeletedCount: BigInt!
   offersAcceptedCount: BigInt!
-  privateOffersCount: BigInt!
-  activeOffersCount: BigInt!
+  offersWithPriceChangesCount: BigInt!
+  offersPrivateCount: BigInt!
+  offersActiveCount: BigInt!
+
+  accountsCount: BigInt!
+  accountsWithOffersCount: BigInt!
+  accountsWithSalesCount: BigInt!
+  accountsWithPurchasesCount: BigInt!
+  accountsWithSwapsCount: BigInt!
+
+  transactionsCount: BigInt!
+  tokensCount: BigInt!
+
+  realTokenTradeVolume: BigInt!
+}
+
+type CumulativeStatisticDay @entity {
+  id: ID!
+  year: String!
+  month: String!
+  day: String!
+
+  offersCreatedCount: BigInt!
+  offersDeletedCount: BigInt!
+  offersAcceptedCount: BigInt!
+  offersWithPriceChangesCount: BigInt!
+  offersPrivateCount: BigInt!
+  offersActiveCount: BigInt!
+
+  accountsCount: BigInt!
+  accountsWithOffersCount: BigInt!
+  accountsWithSalesCount: BigInt!
+  accountsWithPurchasesCount: BigInt!
+  accountsWithSwapsCount: BigInt!
+
+  transactionsCount: BigInt!
+  tokensCount: BigInt!
+
+  realTokenTradeVolume: BigInt!
+}
+
+type StatisticMonth @entity {
+  id: ID!
+  year: String!
+  month: String!
+
+  offersCreatedCount: BigInt!
+  offersDeletedCount: BigInt!
+  offersAcceptedCount: BigInt!
+  offersWithPriceChangesCount: BigInt!
+  offersPrivateCount: BigInt!
+  offersActiveCount: BigInt!
+
+  accountsCount: BigInt!
+  accountsWithOffersCount: BigInt!
+  accountsWithSalesCount: BigInt!
+  accountsWithPurchasesCount: BigInt!
+  accountsWithSwapsCount: BigInt!
+
+  transactionsCount: BigInt!
+  tokensCount: BigInt!
+
+  realTokenTradeVolume: BigInt!
+}
+
+type CumulativeStatisticMonth @entity {
+  id: ID!
+  year: String!
+  month: String!
+
+  offersCreatedCount: BigInt!
+  offersDeletedCount: BigInt!
+  offersAcceptedCount: BigInt!
+  offersWithPriceChangesCount: BigInt!
+  offersPrivateCount: BigInt!
+  offersActiveCount: BigInt!
 
   accountsCount: BigInt!
   accountsWithOffersCount: BigInt!
