@@ -169,6 +169,12 @@ type Offer @entity {
   removedAtTimestamp: BigInt
 }
 
+type LastCumulativeStatistic @entity {
+  id: ID!
+  lastCumulativeStatisticDayId: String
+  lastCumulativeStatisticMonthId: String
+}
+
 type StatisticDay @entity {
   id: ID!
   year: String!
