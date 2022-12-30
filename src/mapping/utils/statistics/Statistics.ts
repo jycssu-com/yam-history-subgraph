@@ -14,8 +14,8 @@ export class Statistics {
     let lastCumulativeStatistic = LastCumulativeStatistic.load(LAST_CUMULATIVE_STATISTIC_ID)
     if (lastCumulativeStatistic == null) {
       lastCumulativeStatistic = new LastCumulativeStatistic(LAST_CUMULATIVE_STATISTIC_ID)
-      lastCumulativeStatistic.lastCumulativeStatisticDayId = null
-      lastCumulativeStatistic.lastCumulativeStatisticMonthId = null
+      lastCumulativeStatistic.lastCumulativeStatisticDay = null
+      lastCumulativeStatistic.lastCumulativeStatisticMonth = null
       lastCumulativeStatistic.save()
     }
     return lastCumulativeStatistic as LastCumulativeStatistic
@@ -56,7 +56,7 @@ export class Statistics {
 
     if (cumulativeStatisticsDay == null) {
       const lastCumulativeStatistic = Statistics.getLastCumulativeStatistic()
-      const previousId = lastCumulativeStatistic.lastCumulativeStatisticDayId
+      const previousId = lastCumulativeStatistic.lastCumulativeStatisticDay
       const previous = previousId ? CumulativeStatisticDay.load(previousId) : null
 
       cumulativeStatisticsDay = new CumulativeStatisticDay(cumulativeStatisticsDayId)
@@ -80,7 +80,7 @@ export class Statistics {
       cumulativeStatisticsDay.realTokenTradeVolume = previous == null ? BigInt.fromI32(0) : previous.realTokenTradeVolume
       cumulativeStatisticsDay.save()
 
-      lastCumulativeStatistic.lastCumulativeStatisticDayId = cumulativeStatisticsDayId
+      lastCumulativeStatistic.lastCumulativeStatisticDay = cumulativeStatisticsDayId
       lastCumulativeStatistic.save()
     }
     Statistics._cumulativeStatisticsDay = cumulativeStatisticsDay
@@ -120,7 +120,7 @@ export class Statistics {
 
     if (cumulativeStatisticsMonth == null) {
       const lastCumulativeStatistic = Statistics.getLastCumulativeStatistic()
-      const previousId = lastCumulativeStatistic.lastCumulativeStatisticMonthId
+      const previousId = lastCumulativeStatistic.lastCumulativeStatisticMonth
       const previous = previousId ? CumulativeStatisticMonth.load(previousId) : null
 
       cumulativeStatisticsMonth = new CumulativeStatisticMonth(cumulativeStatisticsMonthId)
@@ -143,7 +143,7 @@ export class Statistics {
       cumulativeStatisticsMonth.realTokenTradeVolume = previous == null ? BigInt.fromI32(0) : previous.realTokenTradeVolume
       cumulativeStatisticsMonth.save()
 
-      lastCumulativeStatistic.lastCumulativeStatisticMonthId = cumulativeStatisticsMonthId
+      lastCumulativeStatistic.lastCumulativeStatisticMonth = cumulativeStatisticsMonthId
       lastCumulativeStatistic.save()
     }
     Statistics._cumulativeStatisticsMonth = cumulativeStatisticsMonth
