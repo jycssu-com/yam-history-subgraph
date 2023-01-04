@@ -30,13 +30,13 @@ dataSources:
       eventHandlers:
         - event: OfferAccepted(indexed uint256,indexed address,indexed
             address,address,address,uint256,uint256)
-          handler: handleOfferAccepted
+          handler: offerAcceptedHandler
         - event: OfferCreated(indexed address,indexed address,address,address,indexed
             uint256,uint256,uint256)
-          handler: handleOfferCreated
+          handler: offerCreatedHandler
         - event: OfferDeleted(indexed uint256)
-          handler: handleOfferDeleted
+          handler: offerDeletedHandler
         - event: OfferUpdated(indexed uint256,uint256,indexed uint256,uint256,indexed
             uint256)
-          handler: handleOfferUpdated
+          handler: offerUpdatedHandler
       file: ./src/mapping/index.ts

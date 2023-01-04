@@ -1,11 +1,61 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OfferCreated as OfferCreatedEvent } from '../../types/RealTokenYam/RealTokenYam'
-import { Account, Offer, Token } from '../../types/schema'
+import { Account, Offer, OfferPrice, OfferQuantity, Token } from '../../types/schema'
 import { createOfferPrice, createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
 import { isActiveOffer } from '../utils'
 import { Statistics } from '../utils/statistics/Statistics'
 
-function saveOnToken (address: Address, offerId: string, block: ethereum.Block): Token {
+export function handleOfferCreated (event: OfferCreatedEvent): void {
+  const offer = new Offer(event.params.offerId.toString())
+
+  offer.maker = event.params.seller.toHex()
+  offer.offerToken = event.params.offerToken.toHex()
+  offer.buyerToken = event.params.buyerToken.toHex()
+  offer.transactions = []
+  offer.transactionsCount = BigInt.fromI32(0)
+  offer.createdAtBlock = event.block.number
+  offer.createdAtTimestamp = event.block.timestamp
+
+  updateOfferPrice(offer, event)
+  updateOfferQuantity(offer, event)
+  updateOfferPrivateStatus(offer, event)
+
+  updateRelatedAccount(event.params.seller, offer.id, event.block)
+  const offerToken = updateRelatedToken(event.params.offerToken, offer.id, event.block)
+  const buyerToken = updateRelatedToken(event.params.buyerToken, offer.id, event.block)
+  
+  offer.isActive = isActiveOffer(offer)
+  offer.type = getOfferType(offerToken, buyerToken)
+  offer.save()
+
+  updateStatistics(offer)
+}
+
+function updateOfferPrice (offer: Offer, event: OfferCreatedEvent): void {
+  const offerPrice = createOfferPrice(offer.id, event.params.price, event)
+  offer.price = offerPrice.price
+  offer.prices = [offerPrice.id]
+  offer.pricesCount = BigInt.fromI32(1)
+}
+
+function updateOfferQuantity (offer: Offer, event: OfferCreatedEvent): void {
+  const offerQuantity = createOfferQuantity(offer.id, event.params.amount, 'OfferCreated', event)
+  offer.quantity = offerQuantity.quantity
+  offer.quantities = [offerQuantity.id]
+  offer.quantitiesCount = BigInt.fromI32(1)
+}
+
+function updateOfferPrivateStatus (offer: Offer, event: OfferCreatedEvent): void {
+  if (event.params.buyer.notEqual(Address.fromString('0x0000000000000000000000000000000000000000'))) {
+    const buyer = getAccount(event.params.buyer)
+    offer.taker = buyer.address.toHex()
+    offer.isPrivate = true
+  } else {
+    offer.isPrivate = false
+  }
+}
+
+function updateRelatedToken (address: Address, offerId: string, block: ethereum.Block): Token {
   const token = getToken(address)
   const tokenDay = getTokenDay(token, block.timestamp)
   const tokenMonth = getTokenMonth(token, block.timestamp)
@@ -31,7 +81,7 @@ function saveOnToken (address: Address, offerId: string, block: ethereum.Block):
   return token
 }
 
-function saveOnAccount (address: Address, offerId: string, block: ethereum.Block): Account {
+function updateRelatedAccount (address: Address, offerId: string, block: ethereum.Block): Account {
   const account = getAccount(address)
   const accountMonth = getAccountMonth(account, block.timestamp)
 
@@ -53,52 +103,20 @@ function saveOnAccount (address: Address, offerId: string, block: ethereum.Block
   return account
 }
 
-export function handleOfferCreated(event: OfferCreatedEvent): void {
-  Statistics.initialize(event.block.timestamp)
-
-  const offerId = event.params.offerId.toString()
-  const offerPrice = createOfferPrice(offerId, event.params.price, event)
-  const offerQuantity = createOfferQuantity(offerId, event.params.amount, 'OfferCreated', event)
-
-  const offer = new Offer(offerId)
-  offer.maker = event.params.seller.toHex()
-  offer.offerToken = event.params.offerToken.toHex()
-  offer.buyerToken = event.params.buyerToken.toHex()
-  offer.transactions = []
-  offer.transactionsCount = BigInt.fromI32(0)
-  offer.createdAtBlock = event.block.number
-  offer.createdAtTimestamp = event.block.timestamp
-  offer.price = offerPrice.price
-  offer.prices = [offerPrice.id]
-  offer.pricesCount = BigInt.fromI32(1)
-  offer.quantity = offerQuantity.quantity
-  offer.quantities = [offerQuantity.id]
-  offer.quantitiesCount = BigInt.fromI32(1)
-  offer.isPrivate = false
-  offer.isActive = isActiveOffer(offer)
-
-  if (event.params.buyer.notEqual(Address.fromString('0x0000000000000000000000000000000000000000'))) {
-    getAccount(event.params.buyer) // create account if not exists
-    offer.taker = event.params.buyer.toHex()
-    offer.isPrivate = true
-  }
-
-  saveOnAccount(event.params.seller, offerId, event.block)
-  const offerToken = saveOnToken(event.params.offerToken, offerId, event.block)
-  const buyerToken = saveOnToken(event.params.buyerToken, offerId, event.block)
-
+function getOfferType (offerToken: Token, buyerToken: Token): string {
   if (offerToken.type == 'REALTOKEN' && buyerToken.type == 'REALTOKEN') {
-    offer.type = 'REALTOKENTOREALTOKEN'
-  } else if (offerToken.type == 'REALTOKEN') {
-    offer.type = 'REALTOKENTOERC20'
-  } else if (buyerToken.type == 'REALTOKEN') {
-    offer.type = 'ERC20TOREALTOKEN'
-  } else {
-    offer.type = 'ERC20TOERC20'
+    return 'REALTOKENTOREALTOKEN'
   }
+  if (offerToken.type == 'REALTOKEN') {
+    return 'REALTOKENTOERC20'
+  }
+  if (buyerToken.type == 'REALTOKEN') {
+    return 'ERC20TOREALTOKEN'
+  }
+  return 'ERC20TOERC20'
+}
 
-  offer.save()
-
+function updateStatistics (offer: Offer): void {
   Statistics.increaseOffersCount()
 
   if (offer.isActive) {
@@ -108,6 +126,4 @@ export function handleOfferCreated(event: OfferCreatedEvent): void {
   if (offer.isPrivate) {
     Statistics.increasePrivateOffersCount()
   }
-
-  Statistics.save()
 }

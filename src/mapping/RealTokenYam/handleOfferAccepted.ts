@@ -1,19 +1,58 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OfferAccepted as OfferAcceptedEvent } from '../../types/RealTokenYam/RealTokenYam'
-import { Offer, Token, Transaction } from '../../types/schema'
+import { Account, AccountMonth, Offer, OfferQuantity, Token, Transaction } from '../../types/schema'
 import { createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
 import { isActiveOffer } from '../utils'
 import { Statistics } from '../utils/statistics/Statistics'
 
-function createTransaction (
-  offer: Offer,
-  takerAddress: Address,
-  price: BigInt,
-  quantity: BigInt,
-  event: ethereum.Event
-): Transaction {
+export function handleOfferAccepted(event: OfferAcceptedEvent): void {
+  const offerId = event.params.offerId.toString()
+  const offer = Offer.load(offerId)
+
+  if (offer) {
+    updateOfferQuantity(offer, event)
+    const transaction = createOfferTransaction(offer, event)
+
+    offer.isActive = isActiveOffer(offer)
+    offer.save()
+
+    const offerTokenQuantity = event.params.amount
+    const buyerTokenQuantity = getBuyerTokenQuantity(event.params.offerToken, event.params.amount, event.params.price)
+
+    updateRelatedMakerAccount(event.params.seller, transaction, event)
+    updateRelatedTakerAccount(event.params.buyer, transaction, event)
+    updateRelatedToken(event.params.offerToken, transaction.id, offerTokenQuantity, event)
+    updateRelatedToken(event.params.buyerToken, transaction.id, buyerTokenQuantity, event)
+    updateStatistics(offer, offerTokenQuantity, buyerTokenQuantity)
+  }
+}
+
+function updateOfferQuantity (offer: Offer, event: OfferAcceptedEvent): OfferQuantity {
+  const newQuantity = offer.quantity.minus(event.params.amount)
+  const offerQuantity = createOfferQuantity(offer.id, newQuantity, 'OfferAccepted', event)
+  const quantities = offer.quantities
+  quantities.push(offerQuantity.id)
+  offer.quantity = offerQuantity.quantity
+  offer.quantities = quantities
+  offer.quantitiesCount = BigInt.fromI32(quantities.length)
+  return offerQuantity
+}
+
+function createOfferTransaction (offer: Offer, event: OfferAcceptedEvent): Transaction {
+  const transaction = createTransaction(offer, event)
+  const offerTransactions = offer.transactions
+  offerTransactions.push(transaction.id)
+  offer.transactions = offerTransactions
+  offer.transactionsCount = BigInt.fromI32(offerTransactions.length)
+  return transaction
+}
+
+function createTransaction (offer: Offer, event: OfferAcceptedEvent): Transaction {
   const transactionId = event.transaction.hash.toHex() + event.logIndex.toString()
-  Statistics.increaseTransactionsCount()
+  const takerAddress = event.params.buyer
+  const price = event.params.price
+  const quantity = event.params.amount
+
   const transaction = new Transaction(transactionId)
   transaction.type = offer.type
   transaction.offer = offer.id
@@ -24,125 +63,115 @@ function createTransaction (
   transaction.createdAtTimestamp = event.block.timestamp
   transaction.save()
 
+  Statistics.increaseTransactionsCount()
+
   return transaction
 }
 
-function saveOnOfferMaker (address: Address, transaction: Transaction, event: ethereum.Event): void {
+function getBuyerTokenQuantity (offerTokenAddress: Address, quantity: BigInt, price: BigInt): BigInt {
+  const offerToken = getToken(offerTokenAddress)
+  return quantity
+    .div(BigInt.fromI64(<i64>Math.pow(10, offerToken.decimals.toU32())))
+    .times(price)
+}
+
+function updateRelatedMakerAccount (address: Address, transaction: Transaction, event: ethereum.Event): void {
   const offerMaker = getAccount(address)
   const offerMakerMonth = getAccountMonth(offerMaker, event.block.timestamp)
 
   if (transaction.type == 'REALTOKENTOERC20') {
-    const offerMakerSales = offerMaker.sales
-    offerMakerSales.push(transaction.id)
-    offerMaker.sales = offerMakerSales
-    offerMaker.salesCount = BigInt.fromI32(offerMakerSales.length)
-
-    const offerMakerMonthSales = offerMakerMonth.sales
-    offerMakerMonthSales.push(transaction.id)
-    offerMakerMonth.sales = offerMakerMonthSales
-    offerMakerMonth.salesCount = BigInt.fromI32(offerMakerMonthSales.length)
+    addSaleOnAccount(transaction.id, offerMaker, offerMakerMonth)
   } else if (transaction.type == 'ERC20TOREALTOKEN') {
-    const offerMakerPurchase = offerMaker.purchases
-    offerMakerPurchase.push(transaction.id)
-    offerMaker.purchases = offerMakerPurchase
-    offerMaker.purchasesCount = BigInt.fromI32(offerMakerPurchase.length)
-
-    const offerMakerMonthPurchase = offerMakerMonth.purchases
-    offerMakerMonthPurchase.push(transaction.id)
-    offerMakerMonth.purchases = offerMakerMonthPurchase
-    offerMakerMonth.purchasesCount = BigInt.fromI32(offerMakerMonthPurchase.length)
+    addPurchaseOnAccount(transaction.id, offerMaker, offerMakerMonth)
   } else {
-    const offerMakerSwaps = offerMaker.swaps
-    offerMakerSwaps.push(transaction.id)
-    offerMaker.swaps = offerMakerSwaps
-    offerMaker.swapsCount = BigInt.fromI32(offerMakerSwaps.length)
-
-    const offerMakerMonthSwaps = offerMakerMonth.swaps
-    offerMakerMonthSwaps.push(transaction.id)
-    offerMakerMonth.swaps = offerMakerMonthSwaps
-    offerMakerMonth.swapsCount = BigInt.fromI32(offerMakerMonthSwaps.length)
+    addSwapOnAccount(transaction.id, offerMaker, offerMakerMonth)
   }
 
-  const offerMakerTransactions = offerMaker.transactions
-  offerMakerTransactions.push(transaction.id)
-  offerMaker.transactions = offerMakerTransactions
-  offerMaker.transactionsCount = BigInt.fromI32(offerMakerTransactions.length)
-
-  const offerMakerMonthTransactions = offerMakerMonth.transactions
-  offerMakerMonthTransactions.push(transaction.id)
-  offerMakerMonth.transactions = offerMakerMonthTransactions
-  offerMakerMonth.transactionsCount = BigInt.fromI32(offerMakerMonthTransactions.length)
+  addTransactionOnAccount(transaction.id, offerMaker, offerMakerMonth)
+  updateAccountStatistics(offerMaker)
 
   offerMaker.save()
   offerMakerMonth.save()
-
-  if (offerMaker.salesCount.equals(BigInt.fromI32(1))) {
-    Statistics.increaseAccountsWithSalesCount()
-  } else if (offerMaker.purchasesCount.equals(BigInt.fromI32(1))) {
-    Statistics.increaseAccountsWithPurchasesCount()
-  } else if (offerMaker.swapsCount.equals(BigInt.fromI32(1))) {
-    Statistics.increaseAccountsWithSwapsCount()
-  }
 }
 
-function saveOnOfferTaker (address: Address, transaction: Transaction, event: ethereum.Event): void {
+function updateRelatedTakerAccount (address: Address, transaction: Transaction, event: ethereum.Event): void {
   const offerTaker = getAccount(address)
   const offerTakerMonth = getAccountMonth(offerTaker, event.block.timestamp)
 
   if (transaction.type == 'REALTOKENTOERC20') {
-    const offerTakerPurchase = offerTaker.purchases
-    offerTakerPurchase.push(transaction.id)
-    offerTaker.purchases = offerTakerPurchase
-    offerTaker.purchasesCount = BigInt.fromI32(offerTakerPurchase.length)
-
-    const offerTakerMonthPurchase = offerTakerMonth.purchases
-    offerTakerMonthPurchase.push(transaction.id)
-    offerTakerMonth.purchases = offerTakerMonthPurchase
-    offerTakerMonth.purchasesCount = BigInt.fromI32(offerTakerMonthPurchase.length)
+    addPurchaseOnAccount(transaction.id, offerTaker, offerTakerMonth)
   } else if (transaction.type == 'ERC20TOREALTOKEN') {
-    const offerTakerSales = offerTaker.sales
-    offerTakerSales.push(transaction.id)
-    offerTaker.sales = offerTakerSales
-    offerTaker.salesCount = BigInt.fromI32(offerTakerSales.length)
-
-    const offerTakerMonthSales = offerTakerMonth.sales
-    offerTakerMonthSales.push(transaction.id)
-    offerTakerMonth.sales = offerTakerMonthSales
-    offerTakerMonth.salesCount = BigInt.fromI32(offerTakerMonthSales.length)
+    addSaleOnAccount(transaction.id, offerTaker, offerTakerMonth)
   } else {
-    const offerTakerSwaps = offerTaker.swaps
-    offerTakerSwaps.push(transaction.id)
-    offerTaker.swaps = offerTakerSwaps
-    offerTaker.swapsCount = BigInt.fromI32(offerTakerSwaps.length)
-
-    const offerTakerMonthSwaps = offerTakerMonth.swaps
-    offerTakerMonthSwaps.push(transaction.id)
-    offerTakerMonth.swaps = offerTakerMonthSwaps
-    offerTakerMonth.swapsCount = BigInt.fromI32(offerTakerMonthSwaps.length)
+    addSwapOnAccount(transaction.id, offerTaker, offerTakerMonth)
   }
 
-  const offerTakerTransactions = offerTaker.transactions
-  offerTakerTransactions.push(transaction.id)
-  offerTaker.transactions = offerTakerTransactions
-  offerTaker.transactionsCount = BigInt.fromI32(offerTakerTransactions.length)
+  addTransactionOnAccount(transaction.id, offerTaker, offerTakerMonth)
+  updateAccountStatistics(offerTaker)
+
   offerTaker.save()
-
-  const offerTakerMonthTransactions = offerTakerMonth.transactions
-  offerTakerMonthTransactions.push(transaction.id)
-  offerTakerMonth.transactions = offerTakerMonthTransactions
-  offerTakerMonth.transactionsCount = BigInt.fromI32(offerTakerMonthTransactions.length)
   offerTakerMonth.save()
+}
 
-  if (offerTaker.purchasesCount.equals(BigInt.fromI32(1))) {
+function addPurchaseOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountPurchase = account.purchases
+  accountPurchase.push(transactionId)
+  account.purchases = accountPurchase
+  account.purchasesCount = BigInt.fromI32(accountPurchase.length)
+
+  const accountMonthPurchase = accountMonth.purchases
+  accountMonthPurchase.push(transactionId)
+  accountMonth.purchases = accountMonthPurchase
+  accountMonth.purchasesCount = BigInt.fromI32(accountMonthPurchase.length)
+}
+
+function addSaleOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountSales = account.sales
+  accountSales.push(transactionId)
+  account.sales = accountSales
+  account.salesCount = BigInt.fromI32(accountSales.length)
+
+  const accountMonthSales = accountMonth.sales
+  accountMonthSales.push(transactionId)
+  accountMonth.sales = accountMonthSales
+  accountMonth.salesCount = BigInt.fromI32(accountMonthSales.length)
+}
+
+function addSwapOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountSwaps = account.swaps
+  accountSwaps.push(transactionId)
+  account.swaps = accountSwaps
+  account.swapsCount = BigInt.fromI32(accountSwaps.length)
+
+  const accountMonthSwaps = accountMonth.swaps
+  accountMonthSwaps.push(transactionId)
+  accountMonth.swaps = accountMonthSwaps
+  accountMonth.swapsCount = BigInt.fromI32(accountMonthSwaps.length)
+}
+
+function addTransactionOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountTransactions = account.transactions
+  accountTransactions.push(transactionId)
+  account.transactions = accountTransactions
+  account.transactionsCount = BigInt.fromI32(accountTransactions.length)
+
+  const accountMonthTransactions = accountMonth.transactions
+  accountMonthTransactions.push(transactionId)
+  accountMonth.transactions = accountMonthTransactions
+  accountMonth.transactionsCount = BigInt.fromI32(accountMonthTransactions.length)
+}
+
+function updateAccountStatistics (account: Account): void {
+  if (account.purchasesCount.equals(BigInt.fromI32(1))) {
     Statistics.increaseAccountsWithPurchasesCount()
-  } else if (offerTaker.salesCount.equals(BigInt.fromI32(1))) {
+  } else if (account.salesCount.equals(BigInt.fromI32(1))) {
     Statistics.increaseAccountsWithSalesCount()
-  } else if (offerTaker.swapsCount.equals(BigInt.fromI32(1))) {
+  } else if (account.swapsCount.equals(BigInt.fromI32(1))) {
     Statistics.increaseAccountsWithSwapsCount()
   }
 }
 
-function saveOnToken (address: Address, transactionId: string, quantity: BigInt, event: ethereum.Event): Token {
+function updateRelatedToken (address: Address, transactionId: string, quantity: BigInt, event: ethereum.Event): Token {
   const token = getToken(address)
   const tokenDay = getTokenDay(token, event.block.timestamp)
   const tokenMonth = getTokenMonth(token, event.block.timestamp)
@@ -171,58 +200,20 @@ function saveOnToken (address: Address, transactionId: string, quantity: BigInt,
   return token
 }
 
-function getBuyerTokenQuantity (offerTokenAddress: Address, quantity: BigInt, price: BigInt): BigInt {
-  const offerToken = getToken(offerTokenAddress)
-  return quantity
-    .div(BigInt.fromI64(<i64>Math.pow(10, offerToken.decimals.toU32())))
-    .times(price)
-}
+function updateStatistics (offer: Offer, offerTokenQuantity: BigInt, buyerTokenQuantity: BigInt): void {
+  if (offer.transactionsCount.equals(BigInt.fromI32(1))) {
+    Statistics.increaseOffersAcceptedCount()
+  }
 
-export function handleOfferAccepted(event: OfferAcceptedEvent): void {
-  Statistics.initialize(event.block.timestamp)
+  if (!offer.isActive) {
+    Statistics.decreaseActiveOffersCount()
+  }
 
-  const offerId = event.params.offerId.toString()
-  const offer = Offer.load(offerId)
+  if (offer.type == 'REALTOKENTOERC20') {
+    Statistics.increaseRealTokenTradeVolume(offerTokenQuantity)
+  }
 
-  if (offer) {
-    const newAmount = offer.quantity.minus(event.params.amount)
-    const offerQuantity = createOfferQuantity(offer.id, newAmount, 'OfferAccepted', event)
-    const quantities = offer.quantities
-    quantities.push(offerQuantity.id)
-    offer.quantity = offerQuantity.quantity
-    offer.quantities = quantities
-    offer.quantitiesCount = BigInt.fromI32(quantities.length)
-
-    const transaction = createTransaction(offer, event.params.buyer, event.params.price, event.params.amount, event)
-    const offerTransactions = offer.transactions
-    offerTransactions.push(transaction.id)
-    offer.transactions = offerTransactions
-    offer.transactionsCount = BigInt.fromI32(offerTransactions.length)
-
-    offer.isActive = isActiveOffer(offer)
-    offer.save()
-
-    const buyerTokenQuantity = getBuyerTokenQuantity(event.params.offerToken, event.params.amount, event.params.price)
-
-    saveOnOfferMaker(event.params.seller, transaction, event)
-    saveOnOfferTaker(event.params.buyer, transaction, event)
-    const offerToken = saveOnToken(event.params.offerToken, transaction.id, event.params.amount, event)
-    const buyerToken = saveOnToken(event.params.buyerToken, transaction.id, buyerTokenQuantity, event)
-
-    if (offer.transactionsCount.equals(BigInt.fromI32(1))) {
-      Statistics.increaseOffersAcceptedCount()
-    }
-
-    if (!offer.isActive) {
-      Statistics.decreaseActiveOffersCount()
-    }
-
-    if (offer.type != 'REALTOKENTOREALTOKEN' && offerToken.type == 'REALTOKEN') {
-      Statistics.increaseRealTokenTradeVolume(event.params.amount)
-    }
-
-    if (offer.type != 'REALTOKENTOREALTOKEN' && buyerToken.type == 'REALTOKEN') {
-      Statistics.increaseRealTokenTradeVolume(buyerTokenQuantity)
-    }
+  if (offer.type == 'ERC20TOREALTOKEN') {
+    Statistics.increaseRealTokenTradeVolume(buyerTokenQuantity)
   }
 }
