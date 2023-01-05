@@ -1,7 +1,7 @@
 type Account @entity {
   id: ID!
   address: Bytes!
-  offers: [Offer!]!
+  offers: [Offer!]! @derivedFrom(field: "maker")
   offersCount: BigInt!
   purchases: [Transaction!]!
   purchasesCount: BigInt!
@@ -11,7 +11,7 @@ type Account @entity {
   swapsCount: BigInt!
   transactions: [Transaction!]!
   transactionsCount: BigInt!
-  historyMonths: [AccountMonth!]!
+  historyMonths: [AccountMonth!]! @derivedFrom(field: "account")
   historyMonthsCount: BigInt!
 }
 
@@ -56,9 +56,9 @@ type Token @entity {
   transactions: [Transaction!]!
   transactionsCount: BigInt!
   volume: BigInt!
-  historyDays: [TokenDay!]!
+  historyDays: [TokenDay!]! @derivedFrom(field: "token")
   historyDaysCount: BigInt!
-  historyMonths: [TokenMonth!]!
+  historyMonths: [TokenMonth!]! @derivedFrom(field: "token")
   historyMonthsCount: BigInt!
 }
 
@@ -156,12 +156,12 @@ type Offer @entity {
   offerToken: Token!
   buyerToken: Token!
   price: BigInt!
-  prices: [OfferPrice!]!
+  prices: [OfferPrice!]! @derivedFrom(field: "offer")
   pricesCount: BigInt!
   quantity: BigInt!
-  quantities: [OfferQuantity!]!
+  quantities: [OfferQuantity!]! @derivedFrom(field: "offer")
   quantitiesCount: BigInt!
-  transactions: [Transaction!]!
+  transactions: [Transaction!]! @derivedFrom(field: "offer")
   transactionsCount: BigInt!
   createdAtBlock: BigInt!
   createdAtTimestamp: BigInt!

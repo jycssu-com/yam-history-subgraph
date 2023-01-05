@@ -27,10 +27,7 @@ export function getAccountMonth (account: Account, timestamp: BigInt): AccountMo
     accountMonth.transactionsCount = BigInt.fromI32(0)
     accountMonth.save()
 
-    const historyMonths = account.historyMonths
-    historyMonths.push(accountMonthId)
-    account.historyMonths = historyMonths
-    account.historyMonthsCount = BigInt.fromI32(historyMonths.length)
+    account.historyMonthsCount = account.historyMonthsCount.plus(BigInt.fromI32(1))
     account.save()
   }
   return accountMonth

@@ -11,7 +11,6 @@ export function handleOfferCreated (event: OfferCreatedEvent): void {
   offer.maker = event.params.seller.toHex()
   offer.offerToken = event.params.offerToken.toHex()
   offer.buyerToken = event.params.buyerToken.toHex()
-  offer.transactions = []
   offer.transactionsCount = BigInt.fromI32(0)
   offer.createdAtBlock = event.block.number
   offer.createdAtTimestamp = event.block.timestamp
@@ -34,14 +33,12 @@ export function handleOfferCreated (event: OfferCreatedEvent): void {
 function updateOfferPrice (offer: Offer, event: OfferCreatedEvent): void {
   const offerPrice = createOfferPrice(offer.id, event.params.price, event)
   offer.price = offerPrice.price
-  offer.prices = [offerPrice.id]
   offer.pricesCount = BigInt.fromI32(1)
 }
 
 function updateOfferQuantity (offer: Offer, event: OfferCreatedEvent): void {
   const offerQuantity = createOfferQuantity(offer.id, event.params.amount, 'OfferCreated', event)
   offer.quantity = offerQuantity.quantity
-  offer.quantities = [offerQuantity.id]
   offer.quantitiesCount = BigInt.fromI32(1)
 }
 
@@ -85,10 +82,7 @@ function updateRelatedAccount (address: Address, offerId: string, block: ethereu
   const account = getAccount(address)
   const accountMonth = getAccountMonth(account, block.timestamp)
 
-  const accountOffers = account.offers
-  accountOffers.push(offerId)
-  account.offers = accountOffers
-  account.offersCount = BigInt.fromI32(accountOffers.length)
+  account.offersCount = account.offersCount.plus(BigInt.fromI32(1))
   account.save()
 
   const accountMonthCreatedOffers = accountMonth.createdOffers

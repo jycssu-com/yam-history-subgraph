@@ -14,9 +14,7 @@ export function getToken (address: Address): Token {
     token.offersCount = BigInt.fromI32(0)
     token.transactions = []
     token.transactionsCount = BigInt.fromI32(0)
-    token.historyDays = []
     token.historyDaysCount = BigInt.fromI32(0)
-    token.historyMonths = []
     token.historyMonthsCount = BigInt.fromI32(0)
     token.volume = BigInt.fromI32(0)
 

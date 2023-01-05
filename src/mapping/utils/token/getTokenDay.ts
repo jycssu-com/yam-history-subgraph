@@ -23,10 +23,7 @@ export function getTokenDay (token: Token, timestamp: BigInt): TokenDay {
     tokenDay.volume = BigInt.fromI32(0)
     tokenDay.save()
 
-    const historyDays = token.historyDays
-    historyDays.push(tokenDayId)
-    token.historyDays = historyDays
-    token.historyDaysCount = BigInt.fromI32(historyDays.length)
+    token.historyDaysCount = token.historyDaysCount.plus(BigInt.fromI32(1))
     token.save()
   }
   return tokenDay

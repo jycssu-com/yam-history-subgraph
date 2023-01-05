@@ -30,20 +30,13 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
 function updateOfferQuantity (offer: Offer, event: OfferAcceptedEvent): OfferQuantity {
   const newQuantity = offer.quantity.minus(event.params.amount)
   const offerQuantity = createOfferQuantity(offer.id, newQuantity, 'OfferAccepted', event)
-  const quantities = offer.quantities
-  quantities.push(offerQuantity.id)
-  offer.quantity = offerQuantity.quantity
-  offer.quantities = quantities
-  offer.quantitiesCount = BigInt.fromI32(quantities.length)
+  offer.quantitiesCount = offer.quantitiesCount.plus(BigInt.fromI32(1))
   return offerQuantity
 }
 
 function createOfferTransaction (offer: Offer, event: OfferAcceptedEvent): Transaction {
   const transaction = createTransaction(offer, event)
-  const offerTransactions = offer.transactions
-  offerTransactions.push(transaction.id)
-  offer.transactions = offerTransactions
-  offer.transactionsCount = BigInt.fromI32(offerTransactions.length)
+  offer.transactionsCount = offer.transactionsCount.plus(BigInt.fromI32(1))
   return transaction
 }
 

@@ -32,21 +32,13 @@ export function handleOfferUpdated (event: OfferUpdatedEvent): void {
 
 function updateOfferPrice (offer: Offer, event: OfferUpdatedEvent): OfferPrice {
   const offerPrice = createOfferPrice(offer.id, event.params.newPrice, event)
-  const prices = offer.prices
-  prices.push(offerPrice.id)
-  offer.price = offerPrice.price
-  offer.prices = prices
-  offer.pricesCount = BigInt.fromI32(prices.length)
+  offer.pricesCount = offer.pricesCount.plus(BigInt.fromI32(1))
   return offerPrice
 }
 
 function updateOfferQuantity (offer: Offer, event: OfferUpdatedEvent): OfferQuantity {
   const offerQuantity = createOfferQuantity(offer.id, event.params.newAmount, 'OfferUpdated', event)
-  const quantities = offer.quantities
-  quantities.push(offerQuantity.id)
-  offer.quantity = offerQuantity.quantity
-  offer.quantities = quantities
-  offer.quantitiesCount = BigInt.fromI32(quantities.length)
+  offer.quantitiesCount = offer.quantitiesCount.plus(BigInt.fromI32(1))
   return offerQuantity
 }
 

@@ -22,10 +22,7 @@ export function getTokenMonth (token: Token, timestamp: BigInt): TokenMonth {
     tokenMonth.volume = BigInt.fromI32(0)
     tokenMonth.save()
 
-    const historyMonths = token.historyMonths
-    historyMonths.push(tokenMonthId)
-    token.historyMonths = historyMonths
-    token.historyMonthsCount = BigInt.fromI32(historyMonths.length)
+    token.historyMonthsCount = token.historyMonthsCount.plus(BigInt.fromI32(1))
     token.save()
   }
   return tokenMonth

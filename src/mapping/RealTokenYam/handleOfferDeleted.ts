@@ -27,11 +27,7 @@ export function handleOfferDeleted (event: OfferDeletedEvent): void {
 
 function updateOfferQuantity (offer: Offer, event: OfferDeletedEvent): OfferQuantity {
   const offerQuantity = createOfferQuantity(offer.id, BigInt.fromI32(0), 'OfferDeleted', event)
-  const quantities = offer.quantities
-  quantities.push(offerQuantity.id)
-  offer.quantity = offerQuantity.quantity
-  offer.quantities = quantities
-  offer.quantitiesCount = BigInt.fromI32(quantities.length)
+  offer.quantitiesCount = offer.quantitiesCount.plus(BigInt.fromI32(1))
   return offerQuantity
 }
 
