@@ -97,7 +97,7 @@ type TokenMonth @entity {
   volume: BigInt!
 }
 
-type OfferPrice @entity {
+type OfferPrice @entity(immutable: true) {
   id: ID!
   offer: Offer!
   price: BigInt!
@@ -112,7 +112,7 @@ enum OfferQuantityOrigin {
   OfferAccepted
 }
 
-type OfferQuantity @entity {
+type OfferQuantity @entity(immutable: true) {
   id: ID!
   offer: Offer!
   quantity: BigInt!
@@ -128,7 +128,7 @@ enum TransactionType {
   ERC20TOERC20
 }
 
-type Transaction @entity {
+type Transaction @entity(immutable: true) {
   id: ID!
   type: TransactionType!
   offer: Offer!
