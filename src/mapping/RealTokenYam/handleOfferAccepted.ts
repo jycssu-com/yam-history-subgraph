@@ -107,21 +107,37 @@ function updateRelatedTakerAccount (address: Address, transaction: Transaction, 
 }
 
 function addPurchaseOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountPurchase = account.purchases
+  accountPurchase.push(transactionId)
+  account.purchases = accountPurchase
+
   account.purchasesCount = account.purchasesCount.plus(BigInt.fromI32(1))
   accountMonth.purchasesCount = accountMonth.purchasesCount.plus(BigInt.fromI32(1))
 }
 
 function addSaleOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountSales = account.sales
+  accountSales.push(transactionId)
+  account.sales = accountSales
+
   account.salesCount = account.salesCount.plus(BigInt.fromI32(1))
   accountMonth.salesCount = accountMonth.salesCount.plus(BigInt.fromI32(1))
 }
 
 function addSwapOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountSwaps = account.swaps
+  accountSwaps.push(transactionId)
+  account.swaps = accountSwaps
+
   account.swapsCount = account.swapsCount.plus(BigInt.fromI32(1))
   accountMonth.swapsCount = accountMonth.swapsCount.plus(BigInt.fromI32(1))
 }
 
 function addTransactionOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
+  const accountTransactions = account.transactions
+  accountTransactions.push(transactionId)
+  account.transactions = accountTransactions
+
   account.transactionsCount = account.transactionsCount.plus(BigInt.fromI32(1))
   accountMonth.transactionsCount = accountMonth.transactionsCount.plus(BigInt.fromI32(1))
 }
