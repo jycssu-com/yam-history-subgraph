@@ -107,51 +107,23 @@ function updateRelatedTakerAccount (address: Address, transaction: Transaction, 
 }
 
 function addPurchaseOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
-  const accountPurchase = account.purchases
-  accountPurchase.push(transactionId)
-  account.purchases = accountPurchase
-  account.purchasesCount = BigInt.fromI32(accountPurchase.length)
-
-  const accountMonthPurchase = accountMonth.purchases
-  accountMonthPurchase.push(transactionId)
-  accountMonth.purchases = accountMonthPurchase
-  accountMonth.purchasesCount = BigInt.fromI32(accountMonthPurchase.length)
+  account.purchasesCount = account.purchasesCount.plus(BigInt.fromI32(1))
+  accountMonth.purchasesCount = accountMonth.purchasesCount.plus(BigInt.fromI32(1))
 }
 
 function addSaleOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
-  const accountSales = account.sales
-  accountSales.push(transactionId)
-  account.sales = accountSales
-  account.salesCount = BigInt.fromI32(accountSales.length)
-
-  const accountMonthSales = accountMonth.sales
-  accountMonthSales.push(transactionId)
-  accountMonth.sales = accountMonthSales
-  accountMonth.salesCount = BigInt.fromI32(accountMonthSales.length)
+  account.salesCount = account.salesCount.plus(BigInt.fromI32(1))
+  accountMonth.salesCount = accountMonth.salesCount.plus(BigInt.fromI32(1))
 }
 
 function addSwapOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
-  const accountSwaps = account.swaps
-  accountSwaps.push(transactionId)
-  account.swaps = accountSwaps
-  account.swapsCount = BigInt.fromI32(accountSwaps.length)
-
-  const accountMonthSwaps = accountMonth.swaps
-  accountMonthSwaps.push(transactionId)
-  accountMonth.swaps = accountMonthSwaps
-  accountMonth.swapsCount = BigInt.fromI32(accountMonthSwaps.length)
+  account.swapsCount = account.swapsCount.plus(BigInt.fromI32(1))
+  accountMonth.swapsCount = accountMonth.swapsCount.plus(BigInt.fromI32(1))
 }
 
 function addTransactionOnAccount (transactionId: string, account: Account, accountMonth: AccountMonth): void {
-  const accountTransactions = account.transactions
-  accountTransactions.push(transactionId)
-  account.transactions = accountTransactions
-  account.transactionsCount = BigInt.fromI32(accountTransactions.length)
-
-  const accountMonthTransactions = accountMonth.transactions
-  accountMonthTransactions.push(transactionId)
-  accountMonth.transactions = accountMonthTransactions
-  accountMonth.transactionsCount = BigInt.fromI32(accountMonthTransactions.length)
+  account.transactionsCount = account.transactionsCount.plus(BigInt.fromI32(1))
+  accountMonth.transactionsCount = accountMonth.transactionsCount.plus(BigInt.fromI32(1))
 }
 
 function updateAccountStatistics (account: Account): void {
@@ -176,17 +148,11 @@ function updateRelatedToken (address: Address, transactionId: string, quantity: 
   token.volume = token.volume.plus(quantity)
   token.save()
 
-  const tokenDayTransactions = tokenDay.transactions
-  tokenDayTransactions.push(transactionId)
-  tokenDay.transactions = tokenDayTransactions
-  tokenDay.transactionsCount = BigInt.fromI32(tokenDayTransactions.length)
+  tokenDay.transactionsCount = tokenDay.transactionsCount.plus(BigInt.fromI32(1))
   tokenDay.volume = tokenDay.volume.plus(quantity)
   tokenDay.save()
 
-  const tokenMonthTransactions = tokenMonth.transactions
-  tokenMonthTransactions.push(transactionId)
-  tokenMonth.transactions = tokenMonthTransactions
-  tokenMonth.transactionsCount = BigInt.fromI32(tokenMonthTransactions.length)
+  tokenMonth.transactionsCount = tokenMonth.transactionsCount.plus(BigInt.fromI32(1))
   tokenMonth.volume = tokenMonth.volume.plus(quantity)
   tokenMonth.save()
 

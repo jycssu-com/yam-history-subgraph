@@ -63,16 +63,10 @@ function updateRelatedToken (address: Address, offerId: string, block: ethereum.
   token.offersCount = BigInt.fromI32(tokenOffers.length)
   token.save()
 
-  const tokenDayCreatedOffers = tokenDay.createdOffers
-  tokenDayCreatedOffers.push(offerId)
-  tokenDay.createdOffers = tokenDayCreatedOffers
-  tokenDay.createdOffersCount = BigInt.fromI32(tokenDayCreatedOffers.length)
+  tokenDay.createdOffersCount = tokenDay.createdOffersCount.plus(BigInt.fromI32(1))
   tokenDay.save()
 
-  const tokenMonthCreatedOffers = tokenMonth.createdOffers
-  tokenMonthCreatedOffers.push(offerId)
-  tokenMonth.createdOffers = tokenMonthCreatedOffers
-  tokenMonth.createdOffersCount = BigInt.fromI32(tokenMonthCreatedOffers.length)
+  tokenMonth.createdOffersCount = tokenMonth.createdOffersCount.plus(BigInt.fromI32(1))
   tokenMonth.save()
 
   return token
@@ -85,10 +79,7 @@ function updateRelatedAccount (address: Address, offerId: string, block: ethereu
   account.offersCount = account.offersCount.plus(BigInt.fromI32(1))
   account.save()
 
-  const accountMonthCreatedOffers = accountMonth.createdOffers
-  accountMonthCreatedOffers.push(offerId)
-  accountMonth.createdOffers = accountMonthCreatedOffers
-  accountMonth.createdOffersCount = BigInt.fromI32(accountMonthCreatedOffers.length)
+  accountMonth.createdOffersCount = accountMonth.createdOffersCount.plus(BigInt.fromI32(1))
   accountMonth.save()
 
   if (account.offersCount.equals(BigInt.fromI32(1))) {

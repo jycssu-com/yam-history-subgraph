@@ -21,19 +21,12 @@ type AccountMonth @entity {
   account: Account!
   year: String!
   month: String!
-  createdOffers: [Offer!]!
   createdOffersCount: BigInt!
-  updatedOffers: [Offer!]!
   updatedOffersCount: BigInt!
-  deletedOffers: [Offer!]!
   deletedOffersCount: BigInt!
-  purchases: [Transaction!]!
   purchasesCount: BigInt!
-  sales: [Transaction!]!
   salesCount: BigInt!
-  swaps: [Transaction!]!
   swapsCount: BigInt!
-  transactions: [Transaction!]!
   transactionsCount: BigInt!
 }
 
@@ -69,13 +62,9 @@ type TokenDay @entity {
   year: String!
   month: String!
   day: String!
-  createdOffers: [Offer!]!
   createdOffersCount: BigInt!
-  updatedOffers: [Offer!]!
   updatedOffersCount: BigInt!
-  deletedOffers: [Offer!]!
   deletedOffersCount: BigInt!
-  transactions: [Transaction!]!
   transactionsCount: BigInt!
   volume: BigInt!
 }
@@ -86,13 +75,9 @@ type TokenMonth @entity {
   token: Token!
   year: String!
   month: String!
-  createdOffers: [Offer!]!
   createdOffersCount: BigInt!
-  updatedOffers: [Offer!]!
   updatedOffersCount: BigInt!
-  deletedOffers: [Offer!]!
   deletedOffersCount: BigInt!
-  transactions: [Transaction!]!
   transactionsCount: BigInt!
   volume: BigInt!
 }

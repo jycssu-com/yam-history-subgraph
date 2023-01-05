@@ -11,13 +11,9 @@ export function getTokenMonth (token: Token, timestamp: BigInt): TokenMonth {
     tokenMonth.token = token.id
     tokenMonth.year = getYear(timestamp)
     tokenMonth.month = getMonth(timestamp)
-    tokenMonth.createdOffers = []
     tokenMonth.createdOffersCount = BigInt.fromI32(0)
-    tokenMonth.updatedOffers = []
     tokenMonth.updatedOffersCount = BigInt.fromI32(0)
-    tokenMonth.deletedOffers = []
     tokenMonth.deletedOffersCount = BigInt.fromI32(0)
-    tokenMonth.transactions = []
     tokenMonth.transactionsCount = BigInt.fromI32(0)
     tokenMonth.volume = BigInt.fromI32(0)
     tokenMonth.save()

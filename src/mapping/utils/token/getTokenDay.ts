@@ -12,13 +12,9 @@ export function getTokenDay (token: Token, timestamp: BigInt): TokenDay {
     tokenDay.year = getYear(timestamp)
     tokenDay.month = getMonth(timestamp)
     tokenDay.day = getDay(timestamp)
-    tokenDay.createdOffers = []
     tokenDay.createdOffersCount = BigInt.fromI32(0)
-    tokenDay.updatedOffers = []
     tokenDay.updatedOffersCount = BigInt.fromI32(0)
-    tokenDay.deletedOffers = []
     tokenDay.deletedOffersCount = BigInt.fromI32(0)
-    tokenDay.transactions = []
     tokenDay.transactionsCount = BigInt.fromI32(0)
     tokenDay.volume = BigInt.fromI32(0)
     tokenDay.save()

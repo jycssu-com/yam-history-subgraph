@@ -35,10 +35,7 @@ function updateRelatedAccount (address: Address, offerId: string, block: ethereu
   const account = getAccount(address as Address)
   const accountMonth = getAccountMonth(account, block.timestamp)
 
-  const accountMonthDeletedOffers = accountMonth.deletedOffers
-  accountMonthDeletedOffers.push(offerId)
-  accountMonth.deletedOffers = accountMonthDeletedOffers
-  accountMonth.deletedOffersCount = BigInt.fromI32(accountMonthDeletedOffers.length)
+  accountMonth.deletedOffersCount = accountMonth.deletedOffersCount.plus(BigInt.fromI32(1))
   accountMonth.save()
 }
 
@@ -47,16 +44,10 @@ function updateRelatedToken (address: Address, offerId: string, block: ethereum.
   const tokenDay = getTokenDay(token, block.timestamp)
   const tokenMonth = getTokenMonth(token, block.timestamp)
 
-  const tokenDayDeletedOffers = tokenDay.deletedOffers
-  tokenDayDeletedOffers.push(offerId)
-  tokenDay.deletedOffers = tokenDayDeletedOffers
-  tokenDay.deletedOffersCount = BigInt.fromI32(tokenDayDeletedOffers.length)
+  tokenDay.deletedOffersCount = tokenDay.deletedOffersCount.plus(BigInt.fromI32(1))
   tokenDay.save()
 
-  const tokenMonthDeletedOffers = tokenMonth.deletedOffers
-  tokenMonthDeletedOffers.push(offerId)
-  tokenMonth.deletedOffers = tokenMonthDeletedOffers
-  tokenMonth.deletedOffersCount = BigInt.fromI32(tokenMonthDeletedOffers.length)
+  tokenMonth.deletedOffersCount = tokenMonth.deletedOffersCount.plus(BigInt.fromI32(1))
   tokenMonth.save()
 }
 
