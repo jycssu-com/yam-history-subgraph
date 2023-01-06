@@ -14,37 +14,48 @@ function beforeHandle (event: ethereum.Event): void {
   Statistics.initialize(event.block.timestamp)
 }
 
+function afterHandle (event: ethereum.Event): void {
+  Statistics.save()
+}
+
 export function offerAcceptedHandler (event: OfferAccepted): void {
   beforeHandle(event)
   handleOfferAccepted(event)
+  afterHandle(event)
 }
 
 export function offerCreatedHandler (event: OfferCreated): void {
   beforeHandle(event)
   handleOfferCreated(event)
+  afterHandle(event)
 }
 
 export function offerDeletedHandler (event: OfferDeleted): void {
   beforeHandle(event)
   handleOfferDeleted(event)
+  afterHandle(event)
 }
 
 export function offerUpdatedHandler (event: OfferUpdated): void {
   beforeHandle(event)
   handleOfferUpdated(event)
+  afterHandle(event)
 }
 
 export function tokenWhitelistWithTypeToggledHandler (event: TokenWhitelistWithTypeToggled): void {
   beforeHandle(event)
   handleTokenWhitelistWithTypeToggled(event)
+  afterHandle(event)
 }
 
 export function approvalHandler (event: Approval): void {
   beforeHandle(event)
   handleApproval(event)
+  afterHandle(event)
 }
 
 export function transferHandler (event: Transfer): void {
   beforeHandle(event)
   handleTransfer(event)
+  afterHandle(event)
 }

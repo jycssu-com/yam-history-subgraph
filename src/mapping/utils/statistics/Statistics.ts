@@ -2,8 +2,6 @@ import { BigInt } from '@graphprotocol/graph-ts'
 import { StatisticDay, CumulativeStatisticDay, StatisticMonth, CumulativeStatisticMonth, LastCumulativeStatistic } from '../../../types/schema'
 import { getDay, getFullDay, getFullMonth, getMonth, getYear } from '../date'
 
-const LAST_CUMULATIVE_STATISTIC_ID = 'lastCumulativeStatistic'
-
 export class Statistics {
   static _statisticsDay: StatisticDay | null = null;
   static _cumulativeStatisticsDay: CumulativeStatisticDay | null = null;
@@ -11,9 +9,9 @@ export class Statistics {
   static _cumulativeStatisticsMonth: CumulativeStatisticMonth | null = null;
 
   private static getLastCumulativeStatistic (): LastCumulativeStatistic {
-    let lastCumulativeStatistic = LastCumulativeStatistic.load(LAST_CUMULATIVE_STATISTIC_ID)
+    let lastCumulativeStatistic = LastCumulativeStatistic.load('singleton')
     if (lastCumulativeStatistic == null) {
-      lastCumulativeStatistic = new LastCumulativeStatistic(LAST_CUMULATIVE_STATISTIC_ID)
+      lastCumulativeStatistic = new LastCumulativeStatistic('singleton')
       lastCumulativeStatistic.lastCumulativeStatisticDay = null
       lastCumulativeStatistic.lastCumulativeStatisticMonth = null
       lastCumulativeStatistic.save()
@@ -45,7 +43,6 @@ export class Statistics {
       statisticsDay.accountsWithPurchasesCount = BigInt.fromI32(0)
       statisticsDay.accountsWithSwapsCount = BigInt.fromI32(0)
       statisticsDay.realTokenTradeVolume = BigInt.fromI32(0)
-      statisticsDay.save()
     }
     Statistics._statisticsDay = statisticsDay
   }
@@ -78,7 +75,6 @@ export class Statistics {
       cumulativeStatisticsDay.accountsWithPurchasesCount = previous == null ? BigInt.fromI32(0) : previous.accountsWithPurchasesCount
       cumulativeStatisticsDay.accountsWithSwapsCount = previous == null ? BigInt.fromI32(0) : previous.accountsWithSwapsCount
       cumulativeStatisticsDay.realTokenTradeVolume = previous == null ? BigInt.fromI32(0) : previous.realTokenTradeVolume
-      cumulativeStatisticsDay.save()
 
       lastCumulativeStatistic.lastCumulativeStatisticDay = cumulativeStatisticsDayId
       lastCumulativeStatistic.save()
@@ -109,7 +105,6 @@ export class Statistics {
       statisticsMonth.accountsWithPurchasesCount = BigInt.fromI32(0)
       statisticsMonth.accountsWithSwapsCount = BigInt.fromI32(0)
       statisticsMonth.realTokenTradeVolume = BigInt.fromI32(0)
-      statisticsMonth.save()
     }
     Statistics._statisticsMonth = statisticsMonth
   }
@@ -141,7 +136,6 @@ export class Statistics {
       cumulativeStatisticsMonth.accountsWithPurchasesCount = previous == null ? BigInt.fromI32(0) : previous.accountsWithPurchasesCount
       cumulativeStatisticsMonth.accountsWithSwapsCount = previous == null ? BigInt.fromI32(0) : previous.accountsWithSwapsCount
       cumulativeStatisticsMonth.realTokenTradeVolume = previous == null ? BigInt.fromI32(0) : previous.realTokenTradeVolume
-      cumulativeStatisticsMonth.save()
 
       lastCumulativeStatistic.lastCumulativeStatisticMonth = cumulativeStatisticsMonthId
       lastCumulativeStatistic.save()
@@ -177,7 +171,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.offersCreatedCount = Statistics.cumulativeStatisticsDay.offersCreatedCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.offersCreatedCount = Statistics.statisticsMonth.offersCreatedCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.offersCreatedCount = Statistics.cumulativeStatisticsMonth.offersCreatedCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseTransactionsCount (): void {
@@ -185,7 +178,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.transactionsCount = Statistics.cumulativeStatisticsDay.transactionsCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.transactionsCount = Statistics.statisticsMonth.transactionsCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.transactionsCount = Statistics.cumulativeStatisticsMonth.transactionsCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseTokensCount (): void {
@@ -193,7 +185,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.tokensCount = Statistics.cumulativeStatisticsDay.tokensCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.tokensCount = Statistics.statisticsMonth.tokensCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.tokensCount = Statistics.cumulativeStatisticsMonth.tokensCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseAccountsCount (): void {
@@ -201,7 +192,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.accountsCount = Statistics.cumulativeStatisticsDay.accountsCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.accountsCount = Statistics.statisticsMonth.accountsCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.accountsCount = Statistics.cumulativeStatisticsMonth.accountsCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseOffersWithPriceChangesCount (): void {
@@ -209,7 +199,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.offersWithPriceChangesCount = Statistics.cumulativeStatisticsDay.offersWithPriceChangesCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.offersWithPriceChangesCount = Statistics.statisticsMonth.offersWithPriceChangesCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.offersWithPriceChangesCount = Statistics.cumulativeStatisticsMonth.offersWithPriceChangesCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseOffersDeletedCount (): void {
@@ -217,7 +206,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.offersDeletedCount = Statistics.cumulativeStatisticsDay.offersDeletedCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.offersDeletedCount = Statistics.statisticsMonth.offersDeletedCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.offersDeletedCount = Statistics.cumulativeStatisticsMonth.offersDeletedCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseOffersAcceptedCount (): void {
@@ -225,7 +213,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.offersAcceptedCount = Statistics.cumulativeStatisticsDay.offersAcceptedCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.offersAcceptedCount = Statistics.statisticsMonth.offersAcceptedCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.offersAcceptedCount = Statistics.cumulativeStatisticsMonth.offersAcceptedCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increasePrivateOffersCount (): void {
@@ -233,7 +220,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.offersPrivateCount = Statistics.cumulativeStatisticsDay.offersPrivateCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.offersPrivateCount = Statistics.statisticsMonth.offersPrivateCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.offersPrivateCount = Statistics.cumulativeStatisticsMonth.offersPrivateCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseActiveOffersCount (): void {
@@ -241,7 +227,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.offersActiveCount = Statistics.cumulativeStatisticsDay.offersActiveCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.offersActiveCount = Statistics.statisticsMonth.offersActiveCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.offersActiveCount = Statistics.cumulativeStatisticsMonth.offersActiveCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static decreaseActiveOffersCount (): void {
@@ -249,7 +234,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.offersActiveCount = Statistics.cumulativeStatisticsDay.offersActiveCount.minus(BigInt.fromI32(1))
     Statistics.statisticsMonth.offersActiveCount = Statistics.statisticsMonth.offersActiveCount.minus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.offersActiveCount = Statistics.cumulativeStatisticsMonth.offersActiveCount.minus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseAccountsWithOffersCount (): void {
@@ -257,7 +241,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.accountsWithOffersCount = Statistics.cumulativeStatisticsDay.accountsWithOffersCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.accountsWithOffersCount = Statistics.statisticsMonth.accountsWithOffersCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.accountsWithOffersCount = Statistics.cumulativeStatisticsMonth.accountsWithOffersCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseAccountsWithSalesCount (): void {
@@ -265,7 +248,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.accountsWithSalesCount = Statistics.cumulativeStatisticsDay.accountsWithSalesCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.accountsWithSalesCount = Statistics.statisticsMonth.accountsWithSalesCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.accountsWithSalesCount = Statistics.cumulativeStatisticsMonth.accountsWithSalesCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseAccountsWithPurchasesCount (): void {
@@ -273,7 +255,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.accountsWithPurchasesCount = Statistics.cumulativeStatisticsDay.accountsWithPurchasesCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.accountsWithPurchasesCount = Statistics.statisticsMonth.accountsWithPurchasesCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.accountsWithPurchasesCount = Statistics.cumulativeStatisticsMonth.accountsWithPurchasesCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseAccountsWithSwapsCount (): void {
@@ -281,7 +262,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.accountsWithSwapsCount = Statistics.cumulativeStatisticsDay.accountsWithSwapsCount.plus(BigInt.fromI32(1))
     Statistics.statisticsMonth.accountsWithSwapsCount = Statistics.statisticsMonth.accountsWithSwapsCount.plus(BigInt.fromI32(1))
     Statistics.cumulativeStatisticsMonth.accountsWithSwapsCount = Statistics.cumulativeStatisticsMonth.accountsWithSwapsCount.plus(BigInt.fromI32(1))
-    Statistics.save()
   }
 
   static increaseRealTokenTradeVolume (amount: BigInt): void {
@@ -289,7 +269,6 @@ export class Statistics {
     Statistics.cumulativeStatisticsDay.realTokenTradeVolume = Statistics.cumulativeStatisticsDay.realTokenTradeVolume.plus(amount)
     Statistics.statisticsMonth.realTokenTradeVolume = Statistics.statisticsMonth.realTokenTradeVolume.plus(amount)
     Statistics.cumulativeStatisticsMonth.realTokenTradeVolume = Statistics.cumulativeStatisticsMonth.realTokenTradeVolume.plus(amount)
-    Statistics.save()
   }
 
   static save (): void {
