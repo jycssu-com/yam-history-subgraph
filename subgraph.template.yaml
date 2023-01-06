@@ -2,9 +2,9 @@ specVersion: 0.0.5
 schema:
   file: ./schema.graphql
 dataSources:
-  - kind: ethereum
-    name: RealTokenYam
-    network: {{RealTokenYamNetwork}}
+  - name: RealTokenYam
+    kind: ethereum
+    network: {{network}}
     source:
       abi: RealTokenYam
       address: "{{RealTokenYamAddress}}"
@@ -13,6 +13,7 @@ dataSources:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
+      file: ./src/mapping/index.ts
       entities:
         - Account
         - AccountMonth
@@ -28,15 +29,35 @@ dataSources:
         - name: ERC20
           file: ./abis/ERC20.json
       eventHandlers:
-        - event: OfferAccepted(indexed uint256,indexed address,indexed
-            address,address,address,uint256,uint256)
+        - event: OfferAccepted(indexed uint256,indexed address,indexed address,address,address,uint256,uint256)
           handler: offerAcceptedHandler
-        - event: OfferCreated(indexed address,indexed address,address,address,indexed
-            uint256,uint256,uint256)
+        - event: OfferCreated(indexed address,indexed address,address,address,indexed uint256,uint256,uint256)
           handler: offerCreatedHandler
         - event: OfferDeleted(indexed uint256)
           handler: offerDeletedHandler
-        - event: OfferUpdated(indexed uint256,uint256,indexed uint256,uint256,indexed
-            uint256)
+        - event: OfferUpdated(indexed uint256,uint256,indexed uint256,uint256,indexed uint256)
           handler: offerUpdatedHandler
+        - event: TokenWhitelistWithTypeToggled(indexed address[],indexed uint8[])
+          handler: tokenWhitelistWithTypeToggledHandler
+templates:
+  - name: WhitelistedToken
+    kind: ethereum
+    network: {{network}}
+    source:
+      abi: ERC20
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
       file: ./src/mapping/index.ts
+      entities:
+        - AccountBalance
+        - AccountAllowance
+      abis:
+        - name: ERC20
+          file: ./abis/ERC20.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: transferHandler
+        - event: Approval(indexed address,indexed address,uint256)
+          handler: approvalHandler

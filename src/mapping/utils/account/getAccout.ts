@@ -8,6 +8,7 @@ export function getAccount (address: Address): Account {
     Statistics.increaseAccountsCount()
     account = new Account(address.toHex())
     account.address = address
+    account.offers = []
     account.offersCount = BigInt.fromI32(0)
     account.purchases = []
     account.purchasesCount = BigInt.fromI32(0)
@@ -17,6 +18,8 @@ export function getAccount (address: Address): Account {
     account.swapsCount = BigInt.fromI32(0)
     account.transactions = []
     account.transactionsCount = BigInt.fromI32(0)
+    account.balancesCount = BigInt.fromI32(0)
+    account.allowancesCount = BigInt.fromI32(0)
     account.historyMonthsCount = BigInt.fromI32(0)
     account.save()
   }

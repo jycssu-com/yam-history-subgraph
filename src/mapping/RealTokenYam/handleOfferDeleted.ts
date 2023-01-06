@@ -12,6 +12,7 @@ export function handleOfferDeleted (event: OfferDeletedEvent): void {
 
     offer.removedAtBlock = event.block.number
     offer.removedAtTimestamp = event.block.timestamp
+    offer.quantityAvailable = BigInt.fromI32(0)
     offer.isActive = false
 
     updateOfferQuantity(offer, event)

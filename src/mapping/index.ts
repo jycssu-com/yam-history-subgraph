@@ -4,7 +4,11 @@ import { handleOfferAccepted } from './RealTokenYam/handleOfferAccepted'
 import { handleOfferCreated } from './RealTokenYam/handleOfferCreated'
 import { handleOfferDeleted } from './RealTokenYam/handleOfferDeleted'
 import { handleOfferUpdated } from './RealTokenYam/handleOfferUpdated'
-import { OfferAccepted, OfferCreated, OfferDeleted, OfferUpdated } from '../types/RealTokenYam/RealTokenYam'
+import { handleApproval } from './ERC20/handleApproval'
+import { handleTransfer } from './ERC20/handleTransfer'
+import { OfferAccepted, OfferCreated, OfferDeleted, OfferUpdated, TokenWhitelistWithTypeToggled } from '../types/RealTokenYam/RealTokenYam'
+import { Approval, Transfer } from '../types/RealTokenYam/ERC20'
+import { handleTokenWhitelistWithTypeToggled } from './RealTokenYam/handleTokenWhitelistWithTypeToggled'
 
 function beforeHandle (event: ethereum.Event): void {
   Statistics.initialize(event.block.timestamp)
@@ -28,4 +32,19 @@ export function offerDeletedHandler (event: OfferDeleted): void {
 export function offerUpdatedHandler (event: OfferUpdated): void {
   beforeHandle(event)
   handleOfferUpdated(event)
+}
+
+export function tokenWhitelistWithTypeToggledHandler (event: TokenWhitelistWithTypeToggled): void {
+  beforeHandle(event)
+  handleTokenWhitelistWithTypeToggled(event)
+}
+
+export function approvalHandler (event: Approval): void {
+  beforeHandle(event)
+  handleApproval(event)
+}
+
+export function transferHandler (event: Transfer): void {
+  beforeHandle(event)
+  handleTransfer(event)
 }

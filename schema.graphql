@@ -1,7 +1,7 @@
 type Account @entity {
   id: ID!
   address: Bytes!
-  offers: [Offer!]! @derivedFrom(field: "maker")
+  offers: [Offer!]!
   offersCount: BigInt!
   purchases: [Transaction!]!
   purchasesCount: BigInt!
@@ -11,8 +11,26 @@ type Account @entity {
   swapsCount: BigInt!
   transactions: [Transaction!]!
   transactionsCount: BigInt!
+  balances: [AccountBalance!]! @derivedFrom(field: "account")
+  balancesCount: BigInt!
+  allowances: [AccountAllowance!]! @derivedFrom(field: "account")
+  allowancesCount: BigInt!
   historyMonths: [AccountMonth!]! @derivedFrom(field: "account")
   historyMonthsCount: BigInt!
+}
+
+type AccountBalance @entity {
+  id: ID!
+  account: Account!
+  token: Token!
+  balance: BigInt!
+}
+
+type AccountAllowance @entity {
+  id: ID!
+  account: Account!
+  token: Token!
+  allowance: BigInt!
 }
 
 type AccountMonth @entity {
@@ -143,6 +161,7 @@ type Offer @entity {
   price: BigInt!
   prices: [OfferPrice!]! @derivedFrom(field: "offer")
   pricesCount: BigInt!
+  quantityAvailable: BigInt!
   quantity: BigInt!
   quantities: [OfferQuantity!]! @derivedFrom(field: "offer")
   quantitiesCount: BigInt!

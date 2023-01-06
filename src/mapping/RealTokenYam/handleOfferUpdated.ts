@@ -1,8 +1,7 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OfferUpdated as OfferUpdatedEvent } from '../../types/RealTokenYam/RealTokenYam'
 import { Offer, OfferPrice, OfferQuantity } from '../../types/schema'
-import { createOfferPrice, createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
-import { isActiveOffer } from '../utils'
+import { computeOfferFields, createOfferPrice, createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
 import { Statistics } from '../utils/statistics/Statistics'
 
 export function handleOfferUpdated (event: OfferUpdatedEvent): void {
@@ -20,7 +19,7 @@ export function handleOfferUpdated (event: OfferUpdatedEvent): void {
       updateOfferQuantity(offer, event)
     }
 
-    offer.isActive = isActiveOffer(offer)
+    computeOfferFields(offer)
     offer.save()
 
     updateRelatedAccount(Address.fromString(offer.maker), offer.id, event.block)

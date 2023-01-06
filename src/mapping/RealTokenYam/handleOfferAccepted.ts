@@ -1,8 +1,7 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OfferAccepted as OfferAcceptedEvent } from '../../types/RealTokenYam/RealTokenYam'
-import { Account, AccountMonth, Offer, OfferQuantity, Token, Transaction } from '../../types/schema'
-import { createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
-import { isActiveOffer } from '../utils'
+import { Account, AccountAllowance, AccountMonth, Offer, OfferQuantity, Token, Transaction } from '../../types/schema'
+import { computeOfferFields, createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
 import { Statistics } from '../utils/statistics/Statistics'
 
 export function handleOfferAccepted(event: OfferAcceptedEvent): void {
@@ -13,13 +12,13 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
     updateOfferQuantity(offer, event)
     const transaction = createOfferTransaction(offer, event)
 
-    offer.isActive = isActiveOffer(offer)
+    computeOfferFields(offer)
     offer.save()
 
     const offerTokenQuantity = event.params.amount
     const buyerTokenQuantity = getBuyerTokenQuantity(event.params.offerToken, event.params.amount, event.params.price)
 
-    updateRelatedMakerAccount(event.params.seller, transaction, event)
+    updateRelatedMakerAccount(transaction, event)
     updateRelatedTakerAccount(event.params.buyer, transaction, event)
     updateRelatedToken(event.params.offerToken, transaction.id, offerTokenQuantity, event)
     updateRelatedToken(event.params.buyerToken, transaction.id, buyerTokenQuantity, event)
@@ -68,8 +67,8 @@ function getBuyerTokenQuantity (offerTokenAddress: Address, quantity: BigInt, pr
     .times(price)
 }
 
-function updateRelatedMakerAccount (address: Address, transaction: Transaction, event: ethereum.Event): void {
-  const offerMaker = getAccount(address)
+function updateRelatedMakerAccount (transaction: Transaction, event: OfferAcceptedEvent): void {
+  const offerMaker = getAccount(event.params.seller)
   const offerMakerMonth = getAccountMonth(offerMaker, event.block.timestamp)
 
   if (transaction.type == 'REALTOKENTOERC20') {
@@ -81,6 +80,13 @@ function updateRelatedMakerAccount (address: Address, transaction: Transaction, 
   }
 
   addTransactionOnAccount(transaction.id, offerMaker, offerMakerMonth)
+
+  const offerMakerAllowance = AccountAllowance.load(offerMaker.id + '-' + event.params.offerToken.toHex())
+  if (offerMakerAllowance) {
+    offerMakerAllowance.allowance = offerMakerAllowance.allowance.minus(event.params.amount)
+    offerMakerAllowance.save()
+  }
+
   updateAccountStatistics(offerMaker)
 
   offerMaker.save()

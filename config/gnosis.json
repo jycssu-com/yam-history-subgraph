@@ -1,5 +1,5 @@
 {
-  "RealTokenYamNetwork": "gnosis",
+  "network": "gnosis",
   "RealTokenYamAddress": "0xc759aa7f9dd9720a1502c104dae4f9852bb17c14",
   "RealTokenYamStartBlock": "25530394"
 }
