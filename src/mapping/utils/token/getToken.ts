@@ -18,6 +18,7 @@ export function getToken (address: Address): Token {
     token.historyDaysCount = BigInt.fromI32(0)
     token.historyMonthsCount = BigInt.fromI32(0)
     token.volume = BigInt.fromI32(0)
+    token.volumesCount = BigInt.fromI32(0)
 
     if (isNativeToken(address)) {
       // TODO: Find a way to get the name and symbol of the native token

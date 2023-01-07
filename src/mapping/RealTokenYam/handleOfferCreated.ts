@@ -23,7 +23,7 @@ export function handleOfferCreated (event: OfferCreatedEvent): void {
   const offerToken = updateRelatedToken(event.params.offerToken, offer.id, event.block)
   const buyerToken = updateRelatedToken(event.params.buyerToken, offer.id, event.block)
   
-  computeOfferFields(offer)
+  computeOfferFields(offer, event.block)
   offer.type = getOfferType(offerToken, buyerToken)
   offer.save()
 
@@ -111,6 +111,8 @@ function updateAccountBalance (account: Account, event: OfferCreatedEvent): void
     account.balancesCount = account.balancesCount.plus(BigInt.fromI32(1))
   }
 
+  accountBalance.updatedAtBlock = event.block.number
+  accountBalance.updatedAtTimestamp = event.block.timestamp
   accountBalance.balance = balance.reverted ? BigInt.fromI32(0) : balance.value
   accountBalance.save()
 }
@@ -131,6 +133,8 @@ function updateAccountAllowance (account: Account, event: OfferCreatedEvent): vo
     account.allowancesCount = account.allowancesCount.plus(BigInt.fromI32(1))
   }
 
+  accountAllowance.updatedAtBlock = event.block.number
+  accountAllowance.updatedAtTimestamp = event.block.timestamp
   accountAllowance.allowance = allowance.reverted ? BigInt.fromI32(0) : allowance.value
   accountAllowance.save()
 }

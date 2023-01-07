@@ -12,6 +12,8 @@ export function handleApproval (event: ApprovalEvent): void {
 
     if (accountAllowance) {
       accountAllowance.allowance = event.params.value
+      accountAllowance.updatedAtBlock = event.block.number
+      accountAllowance.updatedAtTimestamp = event.block.timestamp
       accountAllowance.save()
 
       const account = Account.load(accountAllowance.account)
@@ -22,7 +24,7 @@ export function handleApproval (event: ApprovalEvent): void {
           if (offer) {
             if (offer.offerToken == tokenId) {
               const wasActive = offer.isActive
-              computeOfferFields(offer)
+              computeOfferFields(offer, event.block)
               offer.save()
 
               if (!wasActive && offer.isActive) {

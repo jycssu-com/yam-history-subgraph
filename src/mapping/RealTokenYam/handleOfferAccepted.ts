@@ -1,7 +1,7 @@
 import { Address, BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { OfferAccepted as OfferAcceptedEvent } from '../../types/RealTokenYam/RealTokenYam'
-import { Account, AccountAllowance, AccountMonth, Offer, OfferQuantity, Token, Transaction } from '../../types/schema'
-import { computeOfferFields, createOfferQuantity, getAccount, getAccountMonth, getToken, getTokenDay, getTokenMonth } from '../utils'
+import { Account, AccountAllowance, AccountMonth, Offer, OfferQuantity, Token, TokenVolume, TokenVolumeDay, TokenVolumeMonth, Transaction } from '../../types/schema'
+import { computeOfferFields, createOfferQuantity, getAccount, getAccountMonth, getDay, getFullDay, getFullMonth, getMonth, getToken, getTokenDay, getTokenMonth, getYear } from '../utils'
 import { Statistics } from '../utils/statistics/Statistics'
 
 export function handleOfferAccepted(event: OfferAcceptedEvent): void {
@@ -12,16 +12,16 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
     updateOfferQuantity(offer, event)
     const transaction = createOfferTransaction(offer, event)
 
-    computeOfferFields(offer)
-    offer.save()
-
     const offerTokenQuantity = event.params.amount
     const buyerTokenQuantity = getBuyerTokenQuantity(event.params.offerToken, event.params.amount, event.params.price)
 
     updateRelatedMakerAccount(transaction, event)
     updateRelatedTakerAccount(event.params.buyer, transaction, event)
-    updateRelatedToken(event.params.offerToken, transaction.id, offerTokenQuantity, event)
-    updateRelatedToken(event.params.buyerToken, transaction.id, buyerTokenQuantity, event)
+    updateRelatedTokens(transaction.id, offerTokenQuantity, buyerTokenQuantity, event)
+
+    computeOfferFields(offer, event.block)
+    offer.save()
+
     updateStatistics(offer, offerTokenQuantity, buyerTokenQuantity)
   }
 }
@@ -29,6 +29,7 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
 function updateOfferQuantity (offer: Offer, event: OfferAcceptedEvent): OfferQuantity {
   const newQuantity = offer.quantity.minus(event.params.amount)
   const offerQuantity = createOfferQuantity(offer.id, newQuantity, 'OfferAccepted', event)
+  offer.quantity = newQuantity
   offer.quantitiesCount = offer.quantitiesCount.plus(BigInt.fromI32(1))
   return offerQuantity
 }
@@ -63,8 +64,8 @@ function createTransaction (offer: Offer, event: OfferAcceptedEvent): Transactio
 function getBuyerTokenQuantity (offerTokenAddress: Address, quantity: BigInt, price: BigInt): BigInt {
   const offerToken = getToken(offerTokenAddress)
   return quantity
-    .div(BigInt.fromI64(<i64>Math.pow(10, offerToken.decimals.toU32())))
     .times(price)
+    .div(BigInt.fromI64(<i64>Math.pow(10, offerToken.decimals.toU32())))
 }
 
 function updateRelatedMakerAccount (transaction: Transaction, event: OfferAcceptedEvent): void {
@@ -158,17 +159,114 @@ function updateAccountStatistics (account: Account): void {
   }
 }
 
-function updateRelatedToken (address: Address, transactionId: string, quantity: BigInt, event: ethereum.Event): Token {
-  const token = getToken(address)
-  const tokenDay = getTokenDay(token, event.block.timestamp)
-  const tokenMonth = getTokenMonth(token, event.block.timestamp)
+function updateRelatedTokens (txId: string, offerTokenQuantity: BigInt, buyerTokenQuantity: BigInt, event: OfferAcceptedEvent): void  {
+  const offerToken = getToken(event.params.offerToken)
+  const buyerToken = getToken(event.params.buyerToken)
 
+  // Offer Token
+  updateTokenTransaction(offerToken, txId)
+  updateTokenHistory(offerToken, offerTokenQuantity, event.block.timestamp)
+  updateTokenVolume(offerToken, buyerToken, offerTokenQuantity, buyerTokenQuantity, event.block.timestamp)
+
+  // Buyer Token
+  updateTokenTransaction(buyerToken, txId)
+  updateTokenHistory(buyerToken, buyerTokenQuantity, event.block.timestamp)
+  updateTokenVolume(buyerToken, offerToken, buyerTokenQuantity, offerTokenQuantity, event.block.timestamp)
+
+  offerToken.save()
+  buyerToken.save()
+}
+
+function updateTokenTransaction (token: Token, txId: string): void {
   const tokenTransactions = token.transactions
-  tokenTransactions.push(transactionId)
+  tokenTransactions.push(txId)
   token.transactions = tokenTransactions
   token.transactionsCount = BigInt.fromI32(tokenTransactions.length)
+}
+
+function updateTokenVolume (token: Token, childToken: Token, quantity: BigInt, childQuantity: BigInt, timestamp: BigInt): void {
   token.volume = token.volume.plus(quantity)
-  token.save()
+
+  const tokenVolume = getTokenVolume(token, childToken, quantity, childQuantity)
+  tokenVolume.quantity = tokenVolume.quantity.plus(quantity)
+  tokenVolume.volume = tokenVolume.volume.plus(childQuantity)
+  
+  updateTokenVolumeHistory(tokenVolume, quantity, childQuantity, timestamp)
+
+  tokenVolume.save()
+}
+
+function getTokenVolume (token: Token, childToken: Token, quantity: BigInt, childQuantity: BigInt): TokenVolume {
+  let tokenVolume = TokenVolume.load(token.id + '-' + childToken.id)
+  if (tokenVolume == null) {
+    tokenVolume = new TokenVolume(token.id + '-' + childToken.id)
+    tokenVolume.parentToken = token.id
+    tokenVolume.token = childToken.id
+    tokenVolume.quantity = BigInt.fromI32(0)
+    tokenVolume.volume = BigInt.fromI32(0)
+    tokenVolume.volumeDaysCount = BigInt.fromI32(0)
+    tokenVolume.volumeMonthsCount = BigInt.fromI32(0)
+
+    token.volumesCount = token.volumesCount.plus(BigInt.fromI32(1))
+  }
+
+  return tokenVolume
+}
+
+function updateTokenVolumeHistory (tokenVolume: TokenVolume, quantity: BigInt, childQuantity: BigInt, timestamp: BigInt): void {
+  updateTokenVolumeDay(tokenVolume, quantity, childQuantity, timestamp)
+  updateTokenVolumeMonth(tokenVolume, quantity, childQuantity, timestamp)
+}
+
+function updateTokenVolumeDay (tokenVolume: TokenVolume, quantity: BigInt, childQuantity: BigInt, timestamp: BigInt): void {
+  const date = getFullDay(timestamp)
+  const tokenVolumeDayId = tokenVolume.id + '-' + date
+
+  let tokenVolumeDay = TokenVolumeDay.load(tokenVolumeDayId)
+  if (tokenVolumeDay == null) {
+    tokenVolumeDay = new TokenVolumeDay(tokenVolumeDayId)
+    tokenVolumeDay.parent = tokenVolume.id
+    tokenVolumeDay.date = date
+    tokenVolumeDay.year = getYear(timestamp)
+    tokenVolumeDay.month = getMonth(timestamp)
+    tokenVolumeDay.day = getDay(timestamp)
+    tokenVolumeDay.quantity = BigInt.fromI32(0)
+    tokenVolumeDay.volume = BigInt.fromI32(0)
+
+    tokenVolume.volumeDaysCount = tokenVolume.volumeDaysCount.plus(BigInt.fromI32(1))
+  }
+
+  tokenVolumeDay.quantity = tokenVolumeDay.quantity.plus(quantity)
+  tokenVolumeDay.volume = tokenVolumeDay.volume.plus(childQuantity)
+
+  tokenVolumeDay.save()
+}
+
+function updateTokenVolumeMonth (tokenVolume: TokenVolume, quantity: BigInt, childQuantity: BigInt, timestamp: BigInt): void {
+  const date = getFullMonth(timestamp)
+  const tokenVolumeMonthId = tokenVolume.id + '-' + date
+
+  let tokenVolumeMonth = TokenVolumeMonth.load(tokenVolumeMonthId)
+  if (tokenVolumeMonth == null) {
+    tokenVolumeMonth = new TokenVolumeMonth(tokenVolumeMonthId)
+    tokenVolumeMonth.parent = tokenVolume.id
+    tokenVolumeMonth.date = date
+    tokenVolumeMonth.year = getYear(timestamp)
+    tokenVolumeMonth.month = getMonth(timestamp)
+    tokenVolumeMonth.quantity = BigInt.fromI32(0)
+    tokenVolumeMonth.volume = BigInt.fromI32(0)
+
+    tokenVolume.volumeMonthsCount = tokenVolume.volumeMonthsCount.plus(BigInt.fromI32(1))
+  }
+  tokenVolumeMonth.quantity = tokenVolumeMonth.quantity.plus(quantity)
+  tokenVolumeMonth.volume = tokenVolumeMonth.volume.plus(childQuantity)
+
+  tokenVolumeMonth.save()
+}
+
+function updateTokenHistory (token: Token, quantity: BigInt, timestamp: BigInt): void {
+  const tokenDay = getTokenDay(token, timestamp)
+  const tokenMonth = getTokenMonth(token, timestamp)
 
   tokenDay.transactionsCount = tokenDay.transactionsCount.plus(BigInt.fromI32(1))
   tokenDay.volume = tokenDay.volume.plus(quantity)
@@ -177,8 +275,6 @@ function updateRelatedToken (address: Address, transactionId: string, quantity: 
   tokenMonth.transactionsCount = tokenMonth.transactionsCount.plus(BigInt.fromI32(1))
   tokenMonth.volume = tokenMonth.volume.plus(quantity)
   tokenMonth.save()
-
-  return token
 }
 
 function updateStatistics (offer: Offer, offerTokenQuantity: BigInt, buyerTokenQuantity: BigInt): void {

@@ -19,7 +19,7 @@ export function handleOfferUpdated (event: OfferUpdatedEvent): void {
       updateOfferQuantity(offer, event)
     }
 
-    computeOfferFields(offer)
+    computeOfferFields(offer, event.block)
     offer.save()
 
     updateRelatedAccount(Address.fromString(offer.maker), offer.id, event.block)
@@ -37,6 +37,7 @@ function updateOfferPrice (offer: Offer, event: OfferUpdatedEvent): OfferPrice {
 
 function updateOfferQuantity (offer: Offer, event: OfferUpdatedEvent): OfferQuantity {
   const offerQuantity = createOfferQuantity(offer.id, event.params.newAmount, 'OfferUpdated', event)
+  offer.quantity = event.params.newAmount
   offer.quantitiesCount = offer.quantitiesCount.plus(BigInt.fromI32(1))
   return offerQuantity
 }

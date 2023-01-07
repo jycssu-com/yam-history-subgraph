@@ -1,9 +1,11 @@
-import { BigInt } from '@graphprotocol/graph-ts'
+import { BigInt, ethereum } from '@graphprotocol/graph-ts'
 import { AccountAllowance, AccountBalance, Offer } from '../../../types/schema'
 
-export function computeOfferFields (offer: Offer): void {
+export function computeOfferFields (offer: Offer, block: ethereum.Block): void {
   offer.quantityAvailable = getAvailableQuantityOffer(offer)
   offer.isActive = isActiveOffer(offer)
+  offer.updatedAtBlock = block.number
+  offer.updatedAtTimestamp = block.timestamp
 }
 
 function getAvailableQuantityOffer (offer: Offer): BigInt {

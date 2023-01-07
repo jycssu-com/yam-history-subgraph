@@ -3,18 +3,21 @@ type Account @entity {
   address: Bytes!
   offers: [Offer!]!
   offersCount: BigInt!
+  transactions: [Transaction!]!
+  transactionsCount: BigInt!
+
   purchases: [Transaction!]!
   purchasesCount: BigInt!
   sales: [Transaction!]!
   salesCount: BigInt!
   swaps: [Transaction!]!
   swapsCount: BigInt!
-  transactions: [Transaction!]!
-  transactionsCount: BigInt!
+
   balances: [AccountBalance!]! @derivedFrom(field: "account")
   balancesCount: BigInt!
   allowances: [AccountAllowance!]! @derivedFrom(field: "account")
   allowancesCount: BigInt!
+
   historyMonths: [AccountMonth!]! @derivedFrom(field: "account")
   historyMonthsCount: BigInt!
 }
@@ -24,6 +27,8 @@ type AccountBalance @entity {
   account: Account!
   token: Token!
   balance: BigInt!
+  updatedAtBlock: BigInt
+  updatedAtTimestamp: BigInt
 }
 
 type AccountAllowance @entity {
@@ -31,6 +36,8 @@ type AccountAllowance @entity {
   account: Account!
   token: Token!
   allowance: BigInt!
+  updatedAtBlock: BigInt
+  updatedAtTimestamp: BigInt
 }
 
 type AccountMonth @entity {
@@ -63,15 +70,59 @@ type Token @entity {
   decimals: BigInt!
   name: String!
   symbol: String!
+
   offers: [Offer!]!
   offersCount: BigInt!
   transactions: [Transaction!]!
   transactionsCount: BigInt!
+
   volume: BigInt!
+  volumes: [TokenVolume!]! @derivedFrom(field: "parentToken")
+  volumesCount: BigInt!
+
   historyDays: [TokenDay!]! @derivedFrom(field: "token")
   historyDaysCount: BigInt!
   historyMonths: [TokenMonth!]! @derivedFrom(field: "token")
   historyMonthsCount: BigInt!
+}
+
+type TokenVolume @entity {
+  # <parentTokenAddress>-<tokenAddress>
+  id: ID!
+  parentToken: Token!
+  quantity: BigInt!
+  token: Token!
+  volume: BigInt!
+
+  volumeDays: [TokenVolumeDay!]! @derivedFrom(field: "parent")
+  volumeDaysCount: BigInt!
+  volumeMonths: [TokenVolumeMonth!]! @derivedFrom(field: "parent")
+  volumeMonthsCount: BigInt!
+}
+
+type TokenVolumeDay @entity {
+  # <parentTokenAddress>-<tokenAddress>-<year>-<month>-<day>
+  id: ID!
+  date: String!
+  year: String!
+  month: String!
+  day: String!
+
+  parent: TokenVolume!
+  quantity: BigInt!
+  volume: BigInt!
+}
+
+type TokenVolumeMonth @entity {
+  # <parentTokenAddress>-<tokenAddress>-<year>-<month>
+  id: ID!
+  date: String!
+  year: String!
+  month: String!
+
+  parent: TokenVolume!
+  quantity: BigInt!
+  volume: BigInt!
 }
 
 type TokenDay @entity {
@@ -172,6 +223,8 @@ type Offer @entity {
   createdAtTimestamp: BigInt!
   removedAtBlock: BigInt
   removedAtTimestamp: BigInt
+  updatedAtBlock: BigInt
+  updatedAtTimestamp: BigInt
 }
 
 type StatisticDay @entity {

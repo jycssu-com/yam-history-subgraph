@@ -10,6 +10,8 @@ export function handleTransfer (event: TransferEvent): void {
 
   if (fromAccountBalance) {
     fromAccountBalance.balance = fromAccountBalance.balance.minus(event.params.value)
+    fromAccountBalance.updatedAtBlock = event.block.number
+    fromAccountBalance.updatedAtTimestamp = event.block.timestamp
     fromAccountBalance.save()
 
     const account = Account.load(fromAccountBalance.account)
@@ -20,7 +22,7 @@ export function handleTransfer (event: TransferEvent): void {
         if (offer) {
           if (offer.offerToken == tokenId) {
             const wasActive = offer.isActive
-            computeOfferFields(offer)
+            computeOfferFields(offer, event.block)
             offer.save()
 
             if (wasActive && !offer.isActive) {
@@ -34,6 +36,8 @@ export function handleTransfer (event: TransferEvent): void {
 
   if (toAccountBalance) {
     toAccountBalance.balance = toAccountBalance.balance.plus(event.params.value)
+    toAccountBalance.updatedAtBlock = event.block.number
+    toAccountBalance.updatedAtTimestamp = event.block.timestamp
     toAccountBalance.save()
 
     const account = Account.load(toAccountBalance.account)
@@ -44,7 +48,7 @@ export function handleTransfer (event: TransferEvent): void {
         if (offer) {
           if (offer.offerToken == tokenId) {
             const wasActive = offer.isActive
-            computeOfferFields(offer)
+            computeOfferFields(offer, event.block)
             offer.save()
 
             if (!wasActive && offer.isActive) {
