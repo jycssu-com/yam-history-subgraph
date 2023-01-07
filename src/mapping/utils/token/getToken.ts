@@ -10,6 +10,7 @@ export function getToken (address: Address): Token {
     Statistics.increaseTokensCount()
     token = new Token(address.toHex())
     token.address = address
+    token.type = getTokenType(address)
     token.offers = []
     token.offersCount = BigInt.fromI32(0)
     token.transactions = []
@@ -18,11 +19,12 @@ export function getToken (address: Address): Token {
     token.historyMonthsCount = BigInt.fromI32(0)
     token.volume = BigInt.fromI32(0)
 
-    if (address.equals(Address.fromString('0x0000000000000000000000000000000000000000'))) { // Native token
-      token.decimals = BigInt.fromI32(18)
+    if (isNativeToken(address)) {
       // TODO: Find a way to get the name and symbol of the native token
       token.name = 'xDai'
       token.symbol = 'xDai'
+      token.decimals = BigInt.fromI32(18)
+      token.type = 'NATIVETOKEN'
     } else {
       const tokenContract = ERC20.bind(address)
   
@@ -35,28 +37,30 @@ export function getToken (address: Address): Token {
         token.name = name.reverted ? 'unknown' : name.value
         token.symbol = symbol.reverted ? 'unknown' : symbol.value
       }
-
-      const contract = RealTokenYam.bind(dataSource.address())
-
-      if (contract) {
-        const tokenType = contract.try_getTokenType(address)
-        switch (tokenType.value) {
-          case 1:
-            token.type = 'REALTOKEN'
-            break
-          case 2:
-            token.type = 'ERC20WITHPERMIT'
-            break
-          case 3:
-            token.type = 'ERC20WITHOUTPERMIT'
-            break
-          default:
-            token.type = 'NOTWHITELISTEDTOKEN'
-        }
-      }
     }
 
     token.save()
   }
   return token
+}
+
+function isNativeToken (address: Address): boolean {
+  return address.equals(Address.fromString('0x0000000000000000000000000000000000000000'))
+}
+
+function getTokenType (address: Address): string {
+  const contract = RealTokenYam.bind(dataSource.address())
+
+  if (contract) {
+    const tokenType = contract.try_getTokenType(address)
+    switch (tokenType.value) {
+      case 1:
+        return 'REALTOKEN'
+      case 2:
+        return 'ERC20WITHPERMIT'
+      case 3:
+        return 'ERC20WITHOUTPERMIT'
+    }
+  }
+  return 'NOTWHITELISTEDTOKEN'
 }

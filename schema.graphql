@@ -53,6 +53,7 @@ enum TokenType {
   REALTOKEN
   ERC20WITHPERMIT
   ERC20WITHOUTPERMIT
+  NATIVETOKEN
 }
 
 type Token @entity {
