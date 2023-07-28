@@ -9,6 +9,7 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
   const offer = Offer.load(offerId)
 
   if (offer) {
+    const wasActive = offer.isActive
     updateOfferQuantity(offer, event)
     const transaction = createOfferTransaction(offer, event)
 
@@ -22,7 +23,7 @@ export function handleOfferAccepted(event: OfferAcceptedEvent): void {
     computeOfferFields(offer, event.block)
     offer.save()
 
-    updateStatistics(offer, offerTokenQuantity, buyerTokenQuantity)
+    updateStatistics(offer, offerTokenQuantity, buyerTokenQuantity, wasActive)
   }
 }
 
@@ -277,12 +278,12 @@ function updateTokenHistory (token: Token, quantity: BigInt, timestamp: BigInt):
   tokenMonth.save()
 }
 
-function updateStatistics (offer: Offer, offerTokenQuantity: BigInt, buyerTokenQuantity: BigInt): void {
+function updateStatistics (offer: Offer, offerTokenQuantity: BigInt, buyerTokenQuantity: BigInt, wasActive: boolean): void {
   if (offer.transactionsCount.equals(BigInt.fromI32(1))) {
     Statistics.increaseOffersAcceptedCount()
   }
 
-  if (!offer.isActive) {
+  if (wasActive && !offer.isActive) {
     Statistics.decreaseActiveOffersCount()
   }
 
